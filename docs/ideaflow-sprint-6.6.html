@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IdeaFlow — 7일 AI코딩 스프린트 (~6/6)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#f4f0e8;--paper-2:#ece6da;--ink:#1d1c22;--ink-soft:#46434d;--line:#cfc7b6;
+    --accent:#d8472b;--accent-2:#1f5f57;--gold:#b6852a;--card:#fbf9f4;
+    --shadow:0 1px 0 rgba(29,28,34,.08),0 18px 40px -28px rgba(29,28,34,.5);--mono:'JetBrains Mono',monospace;--display:'Fraunces',serif;}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Pretendard',sans-serif;line-height:1.6;
+    background-image:radial-gradient(circle at 1px 1px,rgba(29,28,34,.04) 1px,transparent 0);background-size:22px 22px}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px}::selection{background:var(--accent);color:#fff}
+
+  .cover{padding:70px 0 42px;border-bottom:2px solid var(--ink)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);font-weight:700}
+  .cover h1{font-family:var(--display);font-weight:600;font-size:clamp(40px,8vw,90px);line-height:.92;margin:14px 0 0;letter-spacing:-.02em}
+  .cover h1 em{font-style:italic;color:var(--accent)}
+  .cover .sub{font-size:clamp(15px,2.2vw,19px);color:var(--ink-soft);margin-top:16px;max-width:680px}
+  .countdown{margin-top:24px;display:inline-flex;align-items:center;gap:14px;background:var(--ink);color:var(--paper);border-radius:12px;padding:12px 20px;font-family:var(--mono)}
+  .countdown .big{font-family:var(--display);font-size:30px;font-weight:700;color:#f0a07a;line-height:1}
+  .countdown .t{font-size:12px;opacity:.85;line-height:1.3}
+
+  section{padding:54px 0;border-bottom:1px solid var(--line)}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:22px}
+  .sec-num{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:700;border:1.5px solid var(--accent);border-radius:6px;padding:3px 8px;white-space:nowrap}
+  .sec-head h2{font-family:var(--display);font-weight:600;font-size:clamp(23px,3.8vw,36px);margin:0;letter-spacing:-.01em}
+  .lead{font-size:16px;color:var(--ink-soft);max-width:780px;margin:-8px 0 22px}
+
+  .note{border-left:4px solid var(--accent);background:var(--card);padding:16px 20px;border-radius:0 10px 10px 0;margin:18px 0;box-shadow:var(--shadow)}
+  .note .t{font-weight:700;color:var(--accent);font-size:13px;font-family:var(--mono);letter-spacing:.02em;margin-bottom:4px}
+  .note.teal{border-left-color:var(--accent-2)}.note.teal .t{color:var(--accent-2)}
+
+  /* stack chips */
+  .stack{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .schip{background:var(--card);border:1.5px solid var(--line);border-radius:11px;padding:13px 16px;box-shadow:var(--shadow)}
+  .schip .l{font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent-2);font-weight:700;margin-bottom:4px}
+  .schip .v{font-weight:700;font-size:14.5px}.schip .v small{color:var(--ink-soft);font-weight:400;font-family:var(--mono);font-size:11.5px}
+
+  pre{background:var(--ink);color:#e9e4d6;font-family:var(--mono);font-size:12.5px;padding:18px 20px;border-radius:12px;overflow-x:auto;line-height:1.5;box-shadow:var(--shadow);margin:14px 0}
+  pre .k{color:#f0a07a}.pre .s{color:#9fd6cd}pre .c{color:#8b8676}pre .t{color:#9fd6cd}
+
+  /* two columns BE/FE */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .pane{background:var(--card);border:1.5px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+  .pane .ph{padding:14px 20px;color:#fff;display:flex;align-items:center;gap:10px}
+  .pane.be .ph{background:var(--accent-2)}.pane.fe .ph{background:var(--accent)}
+  .pane .ph h3{margin:0;font-family:var(--display);font-size:21px;font-weight:600}
+  .pane .ph .who{font-family:var(--mono);font-size:11px;opacity:.9;margin-left:auto}
+  .pane .body{padding:8px 20px 18px}
+  .chk{list-style:none;margin:0;padding:0}
+  .chk li{padding:9px 0 9px 30px;border-top:1px dashed var(--line);font-size:13.8px;position:relative}
+  .chk li:first-child{border-top:none}
+  .chk li::before{content:"";position:absolute;left:0;top:11px;width:16px;height:16px;border:2px solid var(--ink-soft);border-radius:4px}
+  .chk li b{font-weight:700}
+  .chk li code{font-family:var(--mono);font-size:12px;background:var(--paper-2);padding:1px 5px;border-radius:4px}
+  .chk .sub{display:block;color:var(--ink-soft);font-size:12px;margin-top:2px;font-family:var(--mono)}
+  .gh{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;margin:14px 0 2px;padding-left:2px}
+
+  .tip{background:var(--paper-2);border-radius:9px;padding:10px 14px;margin-top:14px;font-size:12.5px}
+  .tip b{font-family:var(--mono);font-size:11px;color:var(--accent-2)}
+
+  /* day0 */
+  .day0{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .d0{background:var(--card);border:1.5px solid var(--gold);border-radius:10px;padding:11px 15px;font-size:13.5px;box-shadow:var(--shadow)}
+  .d0 b{color:var(--gold);font-family:var(--mono);font-size:11px;display:block;margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em}
+
+  /* integration */
+  .e2e{counter-reset:step;list-style:none;margin:0;padding:0}
+  .e2e li{counter-increment:step;background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:11px 16px 11px 50px;margin-bottom:9px;position:relative;font-size:14px;box-shadow:var(--shadow)}
+  .e2e li::before{content:counter(step);position:absolute;left:12px;top:50%;transform:translateY(-50%);width:24px;height:24px;background:var(--ink);color:var(--paper);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:12px}
+  .traps{margin:0;padding:0;list-style:none}
+  .traps li{padding:9px 0 9px 26px;border-top:1px dashed var(--line);font-size:13.8px;position:relative}
+  .traps li:first-child{border-top:none}
+  .traps li::before{content:"⚠";position:absolute;left:0;top:8px;color:var(--accent);font-size:13px}
+  .traps b{font-weight:700}.traps code{font-family:var(--mono);font-size:12px;background:var(--paper-2);padding:1px 5px;border-radius:4px}
+
+  footer{padding:44px 0 70px;text-align:center;color:var(--ink-soft);font-size:13px;font-family:var(--mono)}
+  footer .big{font-family:var(--display);font-size:22px;color:var(--ink);font-weight:600;margin-bottom:6px}
+
+  @media(max-width:760px){.split,.stack,.day0{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <div class="wrap">
+    <div class="kicker">7-Day AI-Coded Sprint · Backend ↔ Frontend</div>
+    <h1>Idea<em>Flow</em></h1>
+    <p class="sub">백·프론트가 각자 AI로 만들고, <strong>6월 6일에 합쳐서 호환성 테스트</strong>. 핵심은 양쪽이 똑같은 <strong>공통 계약</strong>을 보고 코딩하는 것.</p>
+    <div class="countdown"><span class="big">D-7</span><span class="t">오늘 5/30 (토)<br>마감·통합 테스트 6/6 (토)</span></div>
+  </div>
+</header>
+
+<!-- 0. 전제 -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">00</span><h2>시작 전제 · 추천 스택</h2></div>
+
+    <div class="note">
+      <div class="t">⚠ AI 코딩이라 가장 위험한 건 "코드 작성"이 아니라 "합치기"</div>
+      백을 짜는 AI와 프론트를 짜는 AI는 서로를 모릅니다. <strong>필드명·타입·enum이 한 글자라도 다르면 6/6에 다 깨집니다.</strong> 그래서 아래 <b>공통 계약(02)</b>을 <u>양쪽 AI에 그대로 복붙</u>해서 시작하세요. 이게 이 문서의 90%입니다.
+    </div>
+
+    <div class="note teal">
+      <div class="t">★ 마감 지키는 트림 (AI코딩 기준)</div>
+      ① <strong>화이트보드는 자유 드래그 X → 고정 7노드 편집</strong>으로. (기획안의 박스 7개를 입력칸으로) React Flow 안 써도 되고 AI가 훨씬 빨리 만듭니다.<br>
+      ② <strong>이미지 업로드는 직접 구현 X</strong> → 기본 자동 플레이스홀더, 필요하면 Cloudinary/uploadthing 같은 관리형. (presign 배관 생략)<br>
+      ③ 소셜 로그인은 유지하되 <strong>이메일 로그인을 먼저 100% 동작</strong>시키고 카카오/구글은 병행. 외부 앱 등록이 변수라.
+    </div>
+
+    <div class="stack">
+      <div class="schip"><div class="l">Backend</div><div class="v">Node + TypeScript <small>(NestJS or Express)</small></div></div>
+      <div class="schip"><div class="l">Frontend</div><div class="v">Next.js <small>(React + TypeScript)</small></div></div>
+      <div class="schip"><div class="l">DB</div><div class="v">PostgreSQL + Prisma <small>스키마가 곧 계약</small></div></div>
+      <div class="schip"><div class="l">AI 평가</div><div class="v">Gemini 2.5 Flash <small>@google/genai</small></div></div>
+    </div>
+    <div class="note" style="margin-top:14px">
+      <div class="t">왜 양쪽 다 TypeScript?</div>
+      <strong>공통 계약을 <code>shared/types.ts</code> 한 파일로 만들어 백·프론트가 같이 import</strong>하면, 필드명 어긋남(호환성 문제 1순위)이 원천 차단됩니다. 모노레포 한 개로 두면 더 쉽습니다.
+    </div>
+  </div>
+</section>
+
+<!-- 1. Day 0 (사람이) -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">01</span><h2>Day 0 — 사람이 먼저 (AI 못 함)</h2></div>
+    <p class="lead">AI가 못 하는 외부 설정은 오늘 끝내두세요. 여기 막히면 6/6에 못 끝납니다.</p>
+    <div class="day0">
+      <div class="d0"><b>키 발급</b>Gemini API 키, JWT secret, DB URL → <code>.env</code> 양식 합의</div>
+      <div class="d0"><b>OAuth 앱 등록</b>카카오/구글 개발자 콘솔에 앱 생성 + redirect URI</div>
+      <div class="d0"><b>레포</b>모노레포 1개(권장) 또는 백/프론트 2개 + <code>shared/types.ts</code></div>
+      <div class="d0"><b>계약 동결</b>아래 02 계약을 양쪽 AI 프롬프트에 복붙</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. 공통 계약 -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">02</span><h2>공통 계약 (FROZEN) — 양쪽 AI에 그대로 입력</h2></div>
+    <p class="lead">이 두 블록이 백·프론트의 유일한 진실(source of truth)입니다. 바꾸면 양쪽 다 바꿔야 함.</p>
+
+    <pre><span class="c">// shared/types.ts — 백 · 프론트가 함께 import (호환성의 핵심)</span>
+
+<span class="k">type</span> ApiResponse&lt;T&gt; =
+  | { success: <span class="t">true</span>;  data: T; meta?: { nextCursor?: <span class="t">string</span> } }
+  | { success: <span class="t">false</span>; error: { code: ErrorCode; message: <span class="t">string</span> } };
+
+<span class="k">type</span> ErrorCode = <span class="t">'VALIDATION_ERROR'</span> | <span class="t">'UNAUTHORIZED'</span> | <span class="t">'FORBIDDEN'</span>
+  | <span class="t">'INSUFFICIENT_POINTS'</span> | <span class="t">'NOT_FOUND'</span> | <span class="t">'CONFLICT'</span> | <span class="t">'AI_UNAVAILABLE'</span>;
+
+<span class="k">type</span> Category = <span class="t">'AI'</span>|<span class="t">'EDU'</span>|<span class="t">'TRAVEL'</span>|<span class="t">'ENV'</span>|<span class="t">'HEALTH'</span>|<span class="t">'ETC'</span>;
+<span class="k">type</span> Provider = <span class="t">'email'</span>|<span class="t">'kakao'</span>|<span class="t">'google'</span>;
+
+<span class="k">interface</span> User { id:<span class="t">string</span>; email:<span class="t">string</span>; username:<span class="t">string</span>;
+  profileImageUrl:<span class="t">string</span>|<span class="t">null</span>; pointsBalance:<span class="t">number</span>; }
+
+<span class="k">interface</span> IdeaCard {            <span class="c">// 피드 카드</span>
+  id:<span class="t">string</span>; title:<span class="t">string</span>; oneLine:<span class="t">string</span>; category:Category;
+  coverImageUrl:<span class="t">string</span>|<span class="t">null</span>; authorName:<span class="t">string</span>;
+  likeCount:<span class="t">number</span>; commentCount:<span class="t">number</span>;
+  unlockCost:<span class="t">number</span>; isUnlocked:<span class="t">boolean</span>; createdAt:<span class="t">string</span>; } <span class="c">// ISO8601 UTC</span>
+
+<span class="k">interface</span> IdeaDetail <span class="k">extends</span> IdeaCard {
+  problem:<span class="t">string</span>; solution:<span class="t">string</span>; }  <span class="c">// 잠금 시 빈 문자열로 마스킹</span>
+
+<span class="k">interface</span> Whiteboard { ideaId:<span class="t">string</span>; updatedAt:<span class="t">string</span>;
+  nodes: { key:<span class="t">string</span>; label:<span class="t">string</span>; content:<span class="t">string</span> }[]; } <span class="c">// 고정 7노드</span>
+
+<span class="k">interface</span> AIEvaluation { ideaId:<span class="t">string</span>; overallScore:<span class="t">number</span>; <span class="c">// 0-100</span>
+  scores:{ market:<span class="t">number</span>; feasibility:<span class="t">number</span>; profitability:<span class="t">number</span>;
+           differentiation:<span class="t">number</span>; growth:<span class="t">number</span> };
+  summary:<span class="t">string</span>; suggestions:<span class="t">string</span>[]; createdAt:<span class="t">string</span>; }</pre>
+
+    <pre><span class="c">// 포인트 정책 (DB 시드값 · 변동 가능) + 에러 HTTP 매핑</span>
+SIGNUP_BONUS +30   IDEA_CREATE +10   COMMENT_WRITE +3   LIKE_RECEIVED +1(상한10)
+IDEA_UNLOCK -3      AI_EVALUATE -5    AI_COMPETITOR -10(P2)   AI_BUSINESS -15(P2)
+
+400 VALIDATION_ERROR · 401 UNAUTHORIZED · 403 FORBIDDEN
+402 INSUFFICIENT_POINTS · 404 NOT_FOUND · 409 CONFLICT · 503 AI_UNAVAILABLE
+모든 응답은 위 ApiResponse 봉투로 통일 (raw 객체 그대로 반환 금지)</pre>
+  </div>
+</section>
+
+<!-- 3. 분담 -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">03</span><h2>백은 이걸 · 프론트는 이걸 만든다</h2></div>
+    <div class="split">
+
+      <!-- BACKEND -->
+      <div class="pane be">
+        <div class="ph"><h3>Backend</h3><span class="who">API + DB + AI</span></div>
+        <div class="body">
+          <div class="gh">DB · 인증</div>
+          <ul class="chk">
+            <li><b>Prisma 스키마</b><span class="sub">user·auth_identity·idea·whiteboard·ai_evaluation·point_rule·point_transaction·like·comment·idea_unlock</span></li>
+            <li><b>이메일 가입/로그인</b> (JWT)<span class="sub">가입 시 SIGNUP_BONUS 적립 — 한 트랜잭션</span></li>
+            <li><b>소셜 OAuth</b> 카카오·구글<span class="sub">code 교환 + 프로필 서버 검증 → find-or-create</span></li>
+          </ul>
+          <div class="gh">아이디어 · 참여</div>
+          <ul class="chk">
+            <li><code>GET /ideas</code> 피드<span class="sub">tab·cursor 페이지네이션 → IdeaCard[]</span></li>
+            <li><code>GET /ideas/:id</code><span class="sub">잠금 시 problem/solution 빈값 마스킹</span></li>
+            <li><code>POST /ideas</code><span class="sub">생성 + IDEA_CREATE 적립 동시(원자)</span></li>
+            <li><code>POST /ideas/:id/unlock</code><span class="sub">−3P 후 본문 반환</span></li>
+            <li><code>POST .../like · /comments</code><span class="sub">작성자 적립(상한), 멱등</span></li>
+          </ul>
+          <div class="gh">화이트보드 · AI · 포인트</div>
+          <ul class="chk">
+            <li><code>GET/PUT /ideas/:id/whiteboard</code><span class="sub">7노드 JSON 통째 저장/조회</span></li>
+            <li><code>POST /ideas/:id/ai/evaluate</code><span class="sub">선차감→Gemini(response schema로 JSON)→저장 / 실패 시 환불·503</span></li>
+            <li><b>포인트 엔진</b><span class="sub">point_rule 읽어서 UPDATE…WHERE balance+Δ≥0 (음수·이중차감 방지)</span></li>
+            <li><b>CORS</b> 프론트 origin + Authorization 헤더 허용</li>
+          </ul>
+          <div class="tip"><b>AI 프롬프트 팁 →</b> "위 shared/types.ts와 포인트 정책을 그대로 지켜서 NestJS+Prisma로 구현. 모든 응답은 ApiResponse 봉투. Gemini는 response_schema로 AIEvaluation JSON 강제."</div>
+        </div>
+      </div>
+
+      <!-- FRONTEND -->
+      <div class="pane fe">
+        <div class="ph"><h3>Frontend</h3><span class="who">화면 + 상태</span></div>
+        <div class="body">
+          <div class="gh">기반</div>
+          <ul class="chk">
+            <li><b>API 클라이언트 1곳</b><span class="sub">baseURL env · 토큰 헤더 · ApiResponse 봉투 공통 처리</span></li>
+            <li><b>mock 먼저</b><span class="sub">같은 types.ts로 가짜 응답 → 나중에 BE로 스위치</span></li>
+          </ul>
+          <div class="gh">화면</div>
+          <ul class="chk">
+            <li><b>로그인/가입</b><span class="sub">이메일 폼 + 카카오·구글 버튼/콜백</span></li>
+            <li><b>메인 피드</b><span class="sub">추천·최신·팔로잉 탭 · 카드 · 무한스크롤 · 좋아요</span></li>
+            <li><b>아이디어 작성</b><span class="sub">제목·한줄·문제·해결·카테고리 + 글자수 · 커버 없으면 플레이스홀더</span></li>
+            <li><b>화이트보드</b><span class="sub">고정 7노드 입력칸 + 자동저장(PUT) 호출</span></li>
+            <li><b>AI 요약·평가</b><span class="sub">종합점수 게이지 + 5항목 바 + 요약/개선 탭 · 수초 로딩 상태</span></li>
+            <li><b>포인트 잔액</b> 헤더 표시 + 부족 시 안내</li>
+          </ul>
+          <div class="gh">상태 처리</div>
+          <ul class="chk">
+            <li><b>401</b> 토큰 만료 → 로그인 리다이렉트</li>
+            <li><b>402/503</b> 포인트 부족·AI 실패 → 사용자 안내·재시도</li>
+          </ul>
+          <div class="tip"><b>AI 프롬프트 팁 →</b> "위 shared/types.ts 타입만 사용. Next.js+TS. 처음엔 mock 데이터로 화면 완성하고, API 클라이언트는 한 파일에 모아 baseURL만 바꾸면 BE에 붙게."</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- 4. 6/6 통합 -->
+<section style="border-bottom:none">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">04</span><h2>6/6 — 통합 &amp; 호환성 테스트</h2></div>
+    <p class="lead">합친 뒤 이 시나리오 하나가 끝까지 돌면 MVP 성공. 옆의 "호환성 함정"부터 점검하세요.</p>
+
+    <div class="gh" style="margin-bottom:8px">E2E 시나리오 (끝까지 1회)</div>
+    <ol class="e2e">
+      <li>가입 → 보너스 포인트(+30) 헤더에 보임</li>
+      <li>아이디어 작성 → <b>+10P</b>, 피드 최신 탭에 카드 노출</li>
+      <li>화이트보드 7노드 채우고 저장 → 새로고침해도 유지</li>
+      <li>AI 평가 실행 → <b>−5P</b> 차감 → 종합점수·5항목·요약 표시</li>
+      <li>다른 글 열람 → <b>−3P</b>, 본문(problem/solution) 보임</li>
+      <li>좋아요·댓글 → 카운트 증가 + 작성자 적립</li>
+    </ol>
+
+    <div class="gh" style="margin:22px 0 8px">호환성 함정 — 합칠 때 여기서 깨진다</div>
+    <ul class="traps">
+      <li><b>필드명</b> 양쪽 다 <code>camelCase</code> + 같은 <code>types.ts</code>. <code>one_line</code>↔<code>oneLine</code> 섞이면 즉시 깨짐</li>
+      <li><b>날짜</b> 전부 ISO8601 <b>UTC 문자열</b>로 주고받고, 화면 표시만 KST 변환</li>
+      <li><b>enum 값</b> 문자열 정확히 일치 — category·provider·ErrorCode 오타 주의</li>
+      <li><b>응답 봉투</b> 모든 엔드포인트가 <code>{success,data}</code> 통일. 하나라도 raw 반환하면 프론트 파싱 터짐</li>
+      <li><b>CORS</b> BE가 프론트 origin + <code>Authorization</code> 헤더 허용했는지 (통합 첫 에러 1순위)</li>
+      <li><b>AI 지연</b> Gemini 수 초 → 프론트 로딩 유지, BE 실패 시 환불+503 → 프론트 재시도</li>
+      <li><b>포인트 중복</b> 빠른 더블클릭(평가·언락 2회) → 버튼 disable + BE 멱등/원자 처리</li>
+      <li><b>.env</b> 키(Gemini·JWT·DB) 누락 → 합치는 PC에서 한 번 더 확인</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="big">IdeaFlow · 7-Day AI Sprint</div>
+    공통 계약 동결 → 백/프론트 병렬 AI코딩 → 6/6 통합 테스트<br>
+    <strong>호환성은 코드가 아니라 "같은 계약"에서 나온다.</strong>
+  </div>
+</footer>
+
+</body>
+</html>
