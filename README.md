@@ -1,6 +1,8 @@
-# IdeaFlow MVP
+# UDR_2-_ideaflow
 
 IdeaFlow MVP implementation based on the sprint specification.
+
+Spec / planning note: https://app.notion.com/p/IdeaFlow-36c110f910028164a194e2b3685c731e?source=copy_link&assetsVersion=23.13.20260525.2359
 
 ## Folder Structure
 
@@ -15,7 +17,9 @@ ideaflow-mvp/
     web/
       app/                   # Next.js app router
       components/
-      lib/                   # Mock/API client switch
+      features/              # Screen-level UI surfaces
+      hooks/                 # App state and API orchestration
+      lib/                   # Mock/API client switch and UI helpers
 ```
 
 ## Development Order
