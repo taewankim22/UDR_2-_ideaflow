@@ -1,0 +1,20 @@
+{
+  "name": "ideaflow-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @ideaflow/shared && npm run build -w @ideaflow/api && npm run build -w @ideaflow/web",
+    "dev:web": "npm run build -w @ideaflow/shared && npm run dev -w @ideaflow/web",
+    "dev:api": "npm run build -w @ideaflow/shared && npm run dev -w @ideaflow/api",
+    "prisma:generate": "npm run prisma:generate -w @ideaflow/api",
+    "prisma:migrate": "npm run prisma:migrate -w @ideaflow/api",
+    "typecheck": "npm run build -w @ideaflow/shared && npm run typecheck -w @ideaflow/api && npm run typecheck -w @ideaflow/web"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

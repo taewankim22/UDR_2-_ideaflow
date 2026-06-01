@@ -1,0 +1,37 @@
+FROM node:24-alpine AS deps
+
+WORKDIR /app
+
+RUN apk add --no-cache openssl
+
+COPY package.json package-lock.json tsconfig.base.json ./
+COPY shared/package.json shared/tsconfig.json ./shared/
+COPY apps/api/package.json apps/api/tsconfig.json ./apps/api/
+
+RUN npm ci
+
+FROM deps AS build
+
+COPY shared ./shared
+COPY apps/api ./apps/api
+
+RUN npm run build -w @ideaflow/shared \
+  && npm run prisma:generate -w @ideaflow/api \
+  && npm run build -w @ideaflow/api
+
+FROM node:24-alpine AS runner
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+RUN apk add --no-cache openssl
+
+COPY --from=build /app/package.json /app/package-lock.json ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/shared ./shared
+COPY --from=build /app/apps/api ./apps/api
+
+WORKDIR /app/apps/api
+EXPOSE 4000
+
+CMD ["node", "dist/server.js"]
