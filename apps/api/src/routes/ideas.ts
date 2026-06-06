@@ -24,6 +24,7 @@ import { addPoints, spendPoints } from "../services/points.js";
 const router = Router();
 
 const categorySchema = z.enum(["AI", "EDU", "TRAVEL", "ENV", "HEALTH", "ETC"]);
+const feedTabSchema = z.enum(["recommended", "latest", "following"]);
 const createIdeaSchema = z.object({
   title: z.string().trim().min(2).max(80),
   oneLine: z.string().trim().min(5).max(140),
@@ -173,13 +174,22 @@ router.get(
   optionalAuth,
   asyncHandler(async (req: AuthRequest, res) => {
     const category = typeof req.query.category === "string" ? req.query.category : undefined;
+    const tabInput = typeof req.query.tab === "string" ? req.query.tab : "recommended";
+    const tab = feedTabSchema.safeParse(tabInput).success ? feedTabSchema.parse(tabInput) : "recommended";
     const limit = Math.min(Number(req.query.limit ?? 20), 40);
+
+    if (tab === "following") {
+      return ok(res, []);
+    }
+
     const where = category && categorySchema.safeParse(category).success ? { category: category as Category } : {};
+    const orderBy: Prisma.IdeaOrderByWithRelationInput[] =
+      tab === "latest" ? [{ createdAt: "desc" }] : [{ likeCount: "desc" }, { createdAt: "desc" }];
 
     const ideas = await prisma.idea.findMany({
       where,
       include: { author: true },
-      orderBy: { createdAt: "desc" },
+      orderBy,
       take: limit
     });
 
@@ -294,6 +304,57 @@ router.post(
     }
 
     return ok(res, serializeDetail(idea, userId, new Set([idea.id])));
+  })
+);
+
+router.post(
+  "/:id/like",
+  requireAuth,
+  asyncHandler(async (req: AuthRequest, res) => {
+    const ideaId = getParamId(req);
+    const userId = getUserId(req);
+
+    const likedIdea = await prisma.$transaction(async (tx) => {
+      const idea = await tx.idea.findUnique({
+        where: { id: ideaId },
+        include: { author: true }
+      });
+      if (!idea) {
+        throw new AppError(404, "NOT_FOUND", "아이디어를 찾을 수 없습니다.");
+      }
+      if (idea.authorId === userId) {
+        throw new AppError(409, "CONFLICT", "자기 아이디어에는 좋아요를 누를 수 없습니다.");
+      }
+
+      const existing = await tx.ideaLike.findUnique({
+        where: { userId_ideaId: { userId, ideaId } }
+      });
+      if (existing) {
+        return idea;
+      }
+
+      await tx.ideaLike.create({
+        data: { userId, ideaId }
+      });
+
+      const updated = await tx.idea.update({
+        where: { id: ideaId },
+        data: { likeCount: { increment: 1 } },
+        include: { author: true }
+      });
+
+      await addPoints(tx, {
+        userId: updated.authorId,
+        ideaId: updated.id,
+        action: "LIKE_RECEIVED",
+        reason: "좋아요 받음"
+      });
+
+      return updated;
+    });
+
+    const unlockedIds = await getUnlockedIds(userId, [likedIdea.id]);
+    return ok(res, serializeCard(likedIdea, userId, unlockedIds));
   })
 );
 

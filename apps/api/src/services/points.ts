@@ -7,6 +7,8 @@ type DbClient = PrismaClient | Prisma.TransactionClient;
 export const POINT_RULES: PointRule[] = [
   { action: "SIGNUP_BONUS", delta: 30, label: "가입 보너스" },
   { action: "IDEA_CREATE", delta: 10, label: "아이디어 작성" },
+  { action: "COMMENT_WRITE", delta: 3, label: "댓글 작성" },
+  { action: "LIKE_RECEIVED", delta: 1, label: "좋아요 받음" },
   { action: "IDEA_UNLOCK", delta: -3, label: "아이디어 잠금 해제" },
   { action: "AI_EVALUATE", delta: -5, label: "AI 평가" }
 ];
@@ -35,7 +37,7 @@ export async function addPoints(
   db: DbClient,
   params: {
     userId: string;
-    action: Extract<PointAction, "SIGNUP_BONUS" | "IDEA_CREATE">;
+    action: Extract<PointAction, "SIGNUP_BONUS" | "IDEA_CREATE" | "COMMENT_WRITE" | "LIKE_RECEIVED">;
     reason: string;
     ideaId?: string;
   }

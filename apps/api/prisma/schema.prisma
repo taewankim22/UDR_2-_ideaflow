@@ -32,6 +32,7 @@ model User {
   updatedAt       DateTime           @updatedAt
   authIdentities  AuthIdentity[]
   ideas           Idea[]
+  likedIdeas      IdeaLike[]
   pointLedger     PointTransaction[]
   unlocks         IdeaUnlock[]
 
@@ -67,6 +68,7 @@ model Idea {
   author         User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
   whiteboard     Whiteboard?
   aiEvaluation   AIEvaluation?
+  likes          IdeaLike[]
   unlocks        IdeaUnlock[]
   pointLedger    PointTransaction[]
 
@@ -133,4 +135,17 @@ model IdeaUnlock {
 
   @@unique([userId, ideaId])
   @@map("idea_unlocks")
+}
+
+model IdeaLike {
+  id        String   @id @default(cuid())
+  userId    String
+  ideaId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ideaId])
+  @@index([ideaId])
+  @@map("idea_likes")
 }

@@ -31,7 +31,7 @@ export function mockEvaluation(idea: IdeaDetail, whiteboard: Whiteboard | null):
     ideaId: idea.id,
     overallScore,
     scores,
-    summary: `${idea.title}는 문제 정의와 실행 가능성이 비교적 선명합니다. MVP에서는 타겟 사용자의 반복 빈도와 지불 의사를 가장 먼저 검증해야 합니다.`,
+    summary: `${idea.title}는 문제 정의와 실행 가능성이 비교적 선명합니다. MVP에서는 타깃 사용자의 반복 빈도와 지불 의사를 가장 먼저 검증해야 합니다.`,
     suggestions: [
       "첫 사용자군을 하나로 좁히고 인터뷰 질문을 5개 이하로 정리하세요.",
       "화이트보드의 수익 모델과 검증 계획 노드를 더 구체적인 숫자로 채우세요.",

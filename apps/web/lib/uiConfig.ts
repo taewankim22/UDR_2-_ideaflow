@@ -66,7 +66,7 @@ export const nodeTheme: Record<
     shell: "bg-sky-50 border-sky-200",
     accent: "text-sky-700",
     grid: "",
-    helper: "사용자가 매일 남기는 이유는?"
+    helper: "사용자가 매일 쓰게 될 이유는?"
   },
   revenueModel: {
     label: "수익",
