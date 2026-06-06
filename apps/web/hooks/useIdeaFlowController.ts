@@ -1,13 +1,15 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import type {
   AIEvaluation,
+  ApiResponse,
   AuthSession,
   CreateIdeaRequest,
   IdeaCard,
   IdeaDetail,
   PointSummary,
+  Provider,
   Whiteboard
 } from "@ideaflow/shared/types";
 import { createIdeaFlowClient } from "../lib/client";
@@ -24,10 +26,13 @@ const initialIdeaForm: CreateIdeaRequest = {
 
 const initialLoginForm: LoginFormState = {
   email: "demo@ideaflow.local",
-  username: "김아이디어"
+  username: "아이디어 메이커"
 };
 
-function getErrorMessage(result: { success: false; error: { message: string } }) {
+function errorMessage(result: Extract<ApiResponse<unknown>, { success: false }>) {
+  if (result.error.code === "UNAUTHORIZED") return "로그인이 만료되었습니다. 다시 로그인해 주세요.";
+  if (result.error.code === "INSUFFICIENT_POINTS") return result.error.message || "포인트가 부족합니다.";
+  if (result.error.code === "AI_UNAVAILABLE") return result.error.message || "AI 평가에 실패했습니다. 다시 시도해 주세요.";
   return result.error.message;
 }
 
@@ -40,7 +45,7 @@ export function useIdeaFlowController(): IdeaFlowController {
   const [evaluation, setEvaluation] = useState<AIEvaluation | null>(null);
   const [points, setPoints] = useState<PointSummary | null>(null);
   const [view, setView] = useState<AppView>("feed");
-  const [feedTab, setFeedTab] = useState<FeedTab>("latest");
+  const [feedTab, setFeedTab] = useState<FeedTab>("recommended");
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingBoard, setIsSavingBoard] = useState(false);
@@ -48,81 +53,108 @@ export function useIdeaFlowController(): IdeaFlowController {
   const [loginForm, setLoginForm] = useState<LoginFormState>(initialLoginForm);
   const [ideaForm, setIdeaForm] = useState<CreateIdeaRequest>(initialIdeaForm);
 
-  const isOwnIdea = (idea: IdeaCard | IdeaDetail | null) =>
-    Boolean(session && idea && idea.authorName === session.user.username);
+  const handleFailure = useCallback(
+    (result: Extract<ApiResponse<unknown>, { success: false }>) => {
+      const nextMessage = errorMessage(result);
+      setMessage(nextMessage);
+      if (result.error.code === "UNAUTHORIZED") {
+        client.logout();
+        setSession(null);
+        setIdeas([]);
+        setSelectedIdea(null);
+        setWhiteboard(null);
+        setEvaluation(null);
+        setPoints(null);
+        setView("feed");
+      }
+    },
+    [client]
+  );
 
-  const ownIdeas = ideas.filter(isOwnIdea);
-  const visibleIdeas = ideas.filter((idea) => {
-    if (feedTab === "mine") {
-      return isOwnIdea(idea);
-    }
-    if (feedTab === "recommended") {
-      return idea.category === "AI" || idea.likeCount >= 8;
-    }
-    return true;
-  });
+  const isOwnIdea = useCallback(
+    (idea: IdeaCard | IdeaDetail | null) => Boolean(session && idea && idea.authorName === session.user.username),
+    [session]
+  );
 
-  async function refreshPoints() {
+  const ownIdeas = useMemo(() => ideas.filter(isOwnIdea), [ideas, isOwnIdea]);
+  const visibleIdeas = ideas;
+
+  const selectIdea = useCallback(
+    async (id: string) => {
+      const result = await client.getIdea(id);
+      if (!result.success) {
+        handleFailure(result);
+        return;
+      }
+      setSelectedIdea(result.data);
+      setMessage(null);
+    },
+    [client, handleFailure]
+  );
+
+  const refreshPoints = useCallback(async () => {
     const result = await client.getPoints();
     if (!result.success) {
-      setMessage(getErrorMessage(result));
+      handleFailure(result);
       return;
     }
     setPoints(result.data);
     setSession((previous) => (previous ? { ...previous, user: result.data.user } : previous));
-  }
+  }, [client, handleFailure]);
 
-  async function selectIdea(id: string) {
-    const result = await client.getIdea(id);
-    if (!result.success) {
-      setMessage(getErrorMessage(result));
-      return;
-    }
-    setSelectedIdea(result.data);
-    setMessage(null);
-  }
+  const refreshIdeas = useCallback(
+    async (focusId?: string, tab = feedTab) => {
+      const result = await client.listIdeas({ tab });
+      if (!result.success) {
+        handleFailure(result);
+        return;
+      }
 
-  async function refreshIdeas(focusId?: string) {
-    const result = await client.listIdeas();
-    if (!result.success) {
-      setMessage(getErrorMessage(result));
-      return;
-    }
+      setIdeas(result.data);
+      const nextId = focusId ?? selectedIdea?.id ?? result.data[0]?.id;
+      if (nextId) {
+        await selectIdea(nextId);
+      }
+    },
+    [client, feedTab, handleFailure, selectIdea, selectedIdea?.id]
+  );
 
-    setIdeas(result.data);
-    const nextId = focusId ?? selectedIdea?.id ?? result.data[0]?.id;
-    if (nextId) {
-      await selectIdea(nextId);
-    }
-  }
+  const loadWhiteboard = useCallback(
+    async (ideaId: string) => {
+      const result = await client.getWhiteboard(ideaId);
+      if (!result.success) {
+        handleFailure(result);
+        return;
+      }
+      setWhiteboard(result.data);
+    },
+    [client, handleFailure]
+  );
 
-  async function loadWhiteboard(ideaId: string) {
-    const result = await client.getWhiteboard(ideaId);
-    if (!result.success) {
-      setMessage(getErrorMessage(result));
-      return;
-    }
-    setWhiteboard(result.data);
-  }
+  const loadEvaluation = useCallback(
+    async (ideaId: string) => {
+      const result = await client.getEvaluation(ideaId);
+      if (!result.success) {
+        handleFailure(result);
+        return;
+      }
+      setEvaluation(result.data);
+    },
+    [client, handleFailure]
+  );
 
-  async function loadEvaluation(ideaId: string) {
-    const result = await client.getEvaluation(ideaId);
-    if (!result.success) {
-      setMessage(getErrorMessage(result));
-      return;
-    }
-    setEvaluation(result.data);
-  }
-
-  async function loadAppData(focusId?: string) {
-    setIsLoading(true);
-    try {
-      await refreshIdeas(focusId);
-      await refreshPoints();
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const loadAppData = useCallback(
+    async (focusId?: string) => {
+      setIsLoading(true);
+      try {
+        await refreshIdeas(focusId);
+        await refreshPoints();
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [refreshIdeas, refreshPoints]
+  );
 
   useEffect(() => {
     const stored = client.getStoredSession();
@@ -130,8 +162,13 @@ export function useIdeaFlowController(): IdeaFlowController {
       setSession(stored);
       void loadAppData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client]);
+  }, [client, loadAppData]);
+
+  useEffect(() => {
+    if (session) {
+      void refreshIdeas(undefined, feedTab);
+    }
+  }, [feedTab, refreshIdeas, session]);
 
   useEffect(() => {
     if (view === "whiteboard" && selectedIdea && isOwnIdea(selectedIdea)) {
@@ -144,30 +181,45 @@ export function useIdeaFlowController(): IdeaFlowController {
     if (view === "profile") {
       void refreshPoints();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, selectedIdea?.id]);
+  }, [view, selectedIdea?.id, isOwnIdea, loadWhiteboard, loadEvaluation, refreshPoints]);
 
   useEffect(() => {
-    if (!message) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => setMessage(null), 2400);
+    if (!message) return;
+    const timer = window.setTimeout(() => setMessage(null), 3600);
     return () => window.clearTimeout(timer);
   }, [message]);
 
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsLoading(true);
-    const result = await client.login(loginForm);
-    if (!result.success) {
-      setMessage(getErrorMessage(result));
+    try {
+      const result = await client.login(loginForm);
+      if (!result.success) {
+        handleFailure(result);
+        return;
+      }
+      setSession(result.data);
+      setMessage(null);
+      await loadAppData();
+    } finally {
       setIsLoading(false);
-      return;
     }
-    setSession(result.data);
-    setMessage(null);
-    await loadAppData();
+  }
+
+  async function socialLogin(provider: Provider) {
+    setIsLoading(true);
+    try {
+      const result = await client.login({ ...loginForm, provider });
+      if (!result.success) {
+        handleFailure(result);
+        return;
+      }
+      setSession(result.data);
+      setMessage(`${provider === "kakao" ? "카카오" : "구글"} 콜백을 mock으로 처리했습니다.`);
+      await loadAppData();
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   function logout() {
@@ -184,27 +236,28 @@ export function useIdeaFlowController(): IdeaFlowController {
   async function createIdea(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsLoading(true);
-    const result = await client.createIdea(ideaForm);
-    if (!result.success) {
-      setMessage(getErrorMessage(result));
+    try {
+      const result = await client.createIdea(ideaForm);
+      if (!result.success) {
+        handleFailure(result);
+        return;
+      }
+      setIdeaForm(initialIdeaForm);
+      setSelectedIdea(result.data);
+      setView("whiteboard");
+      await loadAppData(result.data.id);
+      await loadWhiteboard(result.data.id);
+      setMessage("아이디어를 저장하고 +10P를 적립했습니다.");
+    } finally {
       setIsLoading(false);
-      return;
     }
-    setIdeaForm(initialIdeaForm);
-    setSelectedIdea(result.data);
-    setFeedTab("mine");
-    setView("whiteboard");
-    await loadAppData(result.data.id);
-    await loadWhiteboard(result.data.id);
   }
 
   async function unlockIdea() {
-    if (!selectedIdea) {
-      return;
-    }
+    if (!selectedIdea) return;
     const result = await client.unlockIdea(selectedIdea.id);
     if (!result.success) {
-      setMessage(getErrorMessage(result));
+      handleFailure(result);
       return;
     }
     setSelectedIdea(result.data);
@@ -212,37 +265,53 @@ export function useIdeaFlowController(): IdeaFlowController {
     await refreshPoints();
   }
 
-  async function saveWhiteboard() {
-    if (!whiteboard) {
-      return;
-    }
-    setIsSavingBoard(true);
-    const result = await client.updateWhiteboard(whiteboard.ideaId, { nodes: whiteboard.nodes });
+  async function likeIdea(id: string) {
+    const result = await client.likeIdea(id);
     if (!result.success) {
-      setMessage(getErrorMessage(result));
-      setIsSavingBoard(false);
+      handleFailure(result);
       return;
     }
-    setWhiteboard(result.data);
-    setMessage("저장되었습니다.");
-    setIsSavingBoard(false);
+    setIdeas((previous) => previous.map((idea) => (idea.id === result.data.id ? result.data : idea)));
+    if (selectedIdea?.id === result.data.id) {
+      void selectIdea(result.data.id);
+    }
+  }
+
+  async function saveWhiteboard() {
+    if (!whiteboard) return;
+    setIsSavingBoard(true);
+    try {
+      const result = await client.updateWhiteboard(whiteboard.ideaId, { nodes: whiteboard.nodes });
+      if (!result.success) {
+        handleFailure(result);
+        return;
+      }
+      setWhiteboard(result.data);
+      setMessage("화이트보드를 자동저장했습니다.");
+    } finally {
+      setIsSavingBoard(false);
+    }
   }
 
   async function runAI() {
-    if (!selectedIdea) {
+    if (!selectedIdea) return;
+    if (balance < 5) {
+      setMessage("AI 평가에는 5P가 필요합니다. 포인트가 부족합니다.");
       return;
     }
     setIsRunningAI(true);
-    const result = await client.evaluateIdea(selectedIdea.id);
-    if (!result.success) {
-      setMessage(getErrorMessage(result));
+    try {
+      const result = await client.evaluateIdea(selectedIdea.id);
+      if (!result.success) {
+        handleFailure(result);
+        return;
+      }
+      setEvaluation(result.data);
+      await refreshPoints();
+      setMessage("AI 요약과 평가가 완료되었습니다.");
+    } finally {
       setIsRunningAI(false);
-      return;
     }
-    setEvaluation(result.data);
-    await refreshPoints();
-    setMessage("AI 평가가 완료되었습니다.");
-    setIsRunningAI(false);
   }
 
   function pickOwnIdea(id: string) {
@@ -282,11 +351,13 @@ export function useIdeaFlowController(): IdeaFlowController {
       setWhiteboard,
       refresh: loadAppData,
       login,
+      socialLogin,
       logout,
       createIdea,
       selectIdea,
       pickOwnIdea,
       unlockIdea,
+      likeIdea,
       saveWhiteboard,
       runAI
     }

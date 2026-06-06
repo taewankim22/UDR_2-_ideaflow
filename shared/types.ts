@@ -70,11 +70,11 @@ export const WHITEBOARD_NODE_KEYS = [
 ] as const;
 
 export const WHITEBOARD_NODE_DEFINITIONS: ReadonlyArray<Pick<WhiteboardNode, "key" | "label">> = [
-  { key: "problemContext", label: "문제" },
-  { key: "targetUser", label: "타겟 사용자" },
-  { key: "currentAlternatives", label: "리스크" },
+  { key: "problemContext", label: "문제 맥락" },
+  { key: "targetUser", label: "타깃 사용자" },
+  { key: "currentAlternatives", label: "현재 대안" },
   { key: "solutionConcept", label: "해결 방법" },
-  { key: "coreValue", label: "핵심 기능" },
+  { key: "coreValue", label: "핵심 가치" },
   { key: "revenueModel", label: "수익 모델" },
   { key: "validationPlan", label: "MVP" }
 ];
@@ -100,7 +100,13 @@ export interface AIEvaluation {
   createdAt: string;
 }
 
-export type PointAction = "SIGNUP_BONUS" | "IDEA_CREATE" | "IDEA_UNLOCK" | "AI_EVALUATE";
+export type PointAction =
+  | "SIGNUP_BONUS"
+  | "IDEA_CREATE"
+  | "COMMENT_WRITE"
+  | "LIKE_RECEIVED"
+  | "IDEA_UNLOCK"
+  | "AI_EVALUATE";
 
 export interface PointRule {
   action: PointAction;

@@ -3,6 +3,7 @@ import type {
   ApiResponse,
   AuthSession,
   CreateIdeaRequest,
+  ErrorCode,
   IdeaCard,
   IdeaDetail,
   LoginRequest,
@@ -28,8 +29,20 @@ function storeSession(session: AuthSession) {
   window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
 }
 
+function clearSession() {
+  window.localStorage.removeItem(SESSION_KEY);
+}
+
+function fallbackMessage(status: number, code: ErrorCode) {
+  if (status === 401) return "로그인이 만료되었습니다. 다시 로그인해 주세요.";
+  if (status === 402) return "포인트가 부족합니다. 포인트 잔액을 확인해 주세요.";
+  if (status === 503) return "AI 평가가 잠시 실패했습니다. 잠시 후 다시 시도해 주세요.";
+  return "요청을 처리하지 못했습니다.";
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<ApiResponse<T>> {
   const session = getStoredSession();
+
   try {
     const response = await fetch(`${API_BASE_URL}${path}`, {
       ...init,
@@ -39,24 +52,50 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<ApiResp
         ...(init.headers ?? {})
       }
     });
-    return (await response.json()) as ApiResponse<T>;
+    const result = (await response.json()) as ApiResponse<T>;
+
+    if (!response.ok && result.success === false) {
+      if (response.status === 401) {
+        clearSession();
+      }
+      return {
+        success: false,
+        error: {
+          code: result.error.code,
+          message: result.error.message || fallbackMessage(response.status, result.error.code)
+        }
+      };
+    }
+
+    if (response.status === 401) {
+      clearSession();
+    }
+
+    return result;
   } catch {
     return {
       success: false,
       error: {
         code: "AI_UNAVAILABLE",
-        message: "API 서버에 연결할 수 없습니다."
+        message: "API 서버에 연결할 수 없습니다. mock 모드 또는 baseURL을 확인해 주세요."
       }
     };
   }
 }
 
+function withQuery(path: string, query: Record<string, string | undefined>) {
+  const params = new URLSearchParams();
+  Object.entries(query).forEach(([key, value]) => {
+    if (value) params.set(key, value);
+  });
+  const suffix = params.toString();
+  return suffix ? `${path}?${suffix}` : path;
+}
+
 export function createHttpClient(): IdeaFlowClient {
   return {
     getStoredSession,
-    logout() {
-      window.localStorage.removeItem(SESSION_KEY);
-    },
+    logout: clearSession,
     async login(input: LoginRequest) {
       const result = await request<AuthSession>("/auth/login", {
         method: "POST",
@@ -67,10 +106,11 @@ export function createHttpClient(): IdeaFlowClient {
       }
       return result;
     },
-    listIdeas: () => request<IdeaCard[]>("/ideas"),
+    listIdeas: (input) => request<IdeaCard[]>(withQuery("/ideas", input ?? {})),
     getIdea: (id) => request<IdeaDetail>(`/ideas/${id}`),
     createIdea: (input) => request<IdeaDetail>("/ideas", { method: "POST", body: JSON.stringify(input) }),
     unlockIdea: (id) => request<IdeaDetail>(`/ideas/${id}/unlock`, { method: "POST" }),
+    likeIdea: (id) => request<IdeaCard>(`/ideas/${id}/like`, { method: "POST" }),
     getWhiteboard: (id) => request<Whiteboard>(`/ideas/${id}/whiteboard`),
     updateWhiteboard: (id, input: UpdateWhiteboardRequest) =>
       request<Whiteboard>(`/ideas/${id}/whiteboard`, {

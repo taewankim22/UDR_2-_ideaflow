@@ -1,4 +1,4 @@
-import type { FormEvent, SetStateAction, Dispatch } from "react";
+import type { Dispatch, FormEvent, SetStateAction } from "react";
 import type {
   AIEvaluation,
   AuthSession,
@@ -6,11 +6,12 @@ import type {
   IdeaCard,
   IdeaDetail,
   PointSummary,
+  Provider,
   Whiteboard
 } from "@ideaflow/shared/types";
 
 export type AppView = "feed" | "explore" | "compose" | "whiteboard" | "ai" | "profile";
-export type FeedTab = "latest" | "recommended" | "mine";
+export type FeedTab = "recommended" | "latest" | "following";
 
 export interface LoginFormState {
   email: string;
@@ -25,11 +26,13 @@ export interface AppActions {
   setWhiteboard: Dispatch<SetStateAction<Whiteboard | null>>;
   refresh: () => Promise<void>;
   login: (event: FormEvent<HTMLFormElement>) => Promise<void>;
+  socialLogin: (provider: Provider) => Promise<void>;
   logout: () => void;
   createIdea: (event: FormEvent<HTMLFormElement>) => Promise<void>;
   selectIdea: (id: string) => Promise<void>;
   pickOwnIdea: (id: string) => void;
   unlockIdea: () => Promise<void>;
+  likeIdea: (id: string) => Promise<void>;
   saveWhiteboard: () => Promise<void>;
   runAI: () => Promise<void>;
 }

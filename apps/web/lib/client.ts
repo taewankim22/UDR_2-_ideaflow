@@ -17,10 +17,11 @@ export interface IdeaFlowClient {
   getStoredSession(): AuthSession | null;
   logout(): void;
   login(input: LoginRequest): Promise<ApiResponse<AuthSession>>;
-  listIdeas(): Promise<ApiResponse<IdeaCard[]>>;
+  listIdeas(input?: { tab?: "recommended" | "latest" | "following"; cursor?: string }): Promise<ApiResponse<IdeaCard[]>>;
   getIdea(id: string): Promise<ApiResponse<IdeaDetail>>;
   createIdea(input: CreateIdeaRequest): Promise<ApiResponse<IdeaDetail>>;
   unlockIdea(id: string): Promise<ApiResponse<IdeaDetail>>;
+  likeIdea(id: string): Promise<ApiResponse<IdeaCard>>;
   getWhiteboard(id: string): Promise<ApiResponse<Whiteboard>>;
   updateWhiteboard(id: string, input: UpdateWhiteboardRequest): Promise<ApiResponse<Whiteboard>>;
   getEvaluation(id: string): Promise<ApiResponse<AIEvaluation | null>>;

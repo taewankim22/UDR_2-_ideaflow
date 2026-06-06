@@ -20,6 +20,7 @@ export function IdeaFlowApp() {
         isLoading={state.isLoading}
         message={state.message}
         onSubmit={actions.login}
+        onSocialLogin={actions.socialLogin}
       />
     );
   }
@@ -46,6 +47,7 @@ export function IdeaFlowApp() {
           balance={state.balance}
           onSelect={actions.selectIdea}
           onUnlock={actions.unlockIdea}
+          onLike={actions.likeIdea}
           onOpenWhiteboard={() => actions.setView("whiteboard")}
           onOpenAI={() => actions.setView("ai")}
         />
