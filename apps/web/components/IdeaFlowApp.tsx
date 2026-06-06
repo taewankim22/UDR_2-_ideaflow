@@ -35,8 +35,9 @@ export function IdeaFlowApp() {
       onLogout={actions.logout}
       onRefresh={() => void actions.refresh()}
     >
-      {state.view === "feed" ? (
+      {state.view === "feed" || state.view === "explore" ? (
         <FeedView
+          mode={state.view === "explore" ? "explore" : "home"}
           feedTab={state.feedTab}
           setFeedTab={actions.setFeedTab}
           ideas={state.visibleIdeas}

@@ -29,7 +29,14 @@ export function AppShell(props: AppShellProps) {
         />
 
         <section className="min-w-0">
-          <Topbar isLoading={props.isLoading} onRefresh={props.onRefresh} />
+          <Topbar
+            balance={props.balance}
+            session={props.session}
+            isLoading={props.isLoading}
+            onNavigate={props.onNavigate}
+            onLogout={props.onLogout}
+            onRefresh={props.onRefresh}
+          />
 
           <div className="mx-auto max-w-[1540px] px-5 py-5 lg:px-8">
             {props.message ? (

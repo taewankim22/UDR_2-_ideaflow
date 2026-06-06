@@ -9,7 +9,7 @@ import type {
   Whiteboard
 } from "@ideaflow/shared/types";
 
-export type AppView = "feed" | "compose" | "whiteboard" | "ai" | "profile";
+export type AppView = "feed" | "explore" | "compose" | "whiteboard" | "ai" | "profile";
 export type FeedTab = "latest" | "recommended" | "mine";
 
 export interface LoginFormState {

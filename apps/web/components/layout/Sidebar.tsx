@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
+import { useState } from "react";
 import type { AuthSession } from "@ideaflow/shared/types";
 import {
   ChevronDown,
-  CircleGauge,
+  ChevronUp,
   FileText,
   Home,
   LogOut,
@@ -25,6 +26,8 @@ interface SidebarProps {
 }
 
 export function Sidebar(props: SidebarProps) {
+  const [profileOpen, setProfileOpen] = useState(false);
+
   return (
     <aside className="sticky top-0 hidden h-screen flex-col border-r border-slate-200 bg-white px-5 py-6 lg:flex">
       <div className="mb-10 flex items-center gap-2">
@@ -36,12 +39,13 @@ export function Sidebar(props: SidebarProps) {
         className="mb-6 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-brand-600 px-4 text-sm font-black text-white shadow-lg shadow-brand-200 transition hover:bg-brand-700"
         onClick={() => props.onNavigate("compose")}
       >
-        <Plus size={18} />새 아이디어 만들기
+        <Plus size={18} />
+        아이디어 만들기
       </button>
 
       <nav className="grid gap-2 text-sm font-extrabold text-slate-700">
         <NavButton icon={<Home size={21} />} label="홈" view="feed" active={props.active} onClick={props.onNavigate} />
-        <NavButton icon={<Search size={21} />} label="탐색" view="feed" active={props.active} onClick={props.onNavigate} />
+        <NavButton icon={<Search size={21} />} label="탐색" view="explore" active={props.active} onClick={props.onNavigate} />
         <NavButton
           icon={<PanelTop size={21} />}
           label="아이디어 보드"
@@ -51,7 +55,7 @@ export function Sidebar(props: SidebarProps) {
         />
         <NavButton
           icon={<FileText size={21} />}
-          label="내 아이디어"
+          label="새 아이디어"
           view="compose"
           active={props.active}
           onClick={props.onNavigate}
@@ -80,29 +84,61 @@ export function Sidebar(props: SidebarProps) {
           </button>
         </div>
 
-        <div className="flex items-center gap-3 rounded-2xl bg-white">
-          <img
-            className="h-11 w-11 rounded-full border border-brand-100 object-cover"
-            src="/profile-avatar.png"
-            alt=""
-          />
-          <div className="min-w-0 flex-1">
-            <strong className="block truncate text-sm font-black text-slate-950">
-              {props.session.user.username}
-            </strong>
-            <span className="block truncate text-xs font-semibold text-slate-500">
-              @{props.session.user.email.split("@")[0]}
-            </span>
-          </div>
-          <ChevronDown size={16} />
+        <div className="relative">
+          {profileOpen ? (
+            <div className="absolute bottom-[58px] left-0 right-0 rounded-[24px] border border-slate-200 bg-white p-4 shadow-soft">
+              <div className="mb-3 flex items-center gap-3">
+                <div className="grid h-12 w-12 place-items-center rounded-2xl bg-slate-50 text-slate-950 ring-1 ring-slate-200">
+                  <User size={30} />
+                </div>
+                <div className="min-w-0">
+                  <strong className="block truncate text-sm font-black">{props.session.user.username}</strong>
+                  <span className="block truncate text-xs font-semibold text-slate-500">
+                    @{props.session.user.email.split("@")[0]}
+                  </span>
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <button
+                  className="h-10 rounded-xl bg-brand-700 text-sm font-black text-white"
+                  onClick={() => props.onNavigate("profile")}
+                >
+                  내 정보
+                </button>
+                <button
+                  className="h-10 rounded-xl bg-slate-100 text-sm font-black text-slate-700"
+                  onClick={props.onLogout}
+                >
+                  로그아웃
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          <button
+            className="flex w-full items-center gap-3 rounded-2xl bg-white text-left"
+            onClick={() => setProfileOpen((open) => !open)}
+          >
+            <img
+              className="h-11 w-11 rounded-full border border-brand-100 object-cover"
+              src="/profile-avatar.png"
+              alt=""
+            />
+            <div className="min-w-0 flex-1">
+              <strong className="block truncate text-sm font-black text-slate-950">
+                {props.session.user.username}
+              </strong>
+              <span className="block truncate text-xs font-semibold text-slate-500">
+                @{props.session.user.email.split("@")[0]}
+              </span>
+            </div>
+            {profileOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
         </div>
 
         <div className="flex items-center justify-between text-slate-600">
           <button className="grid h-9 w-9 place-items-center rounded-xl hover:bg-slate-100" title="설정">
             <Settings size={18} />
-          </button>
-          <button className="grid h-9 w-9 place-items-center rounded-xl hover:bg-slate-100" title="평가">
-            <CircleGauge size={18} />
           </button>
           <button
             className="grid h-9 w-9 place-items-center rounded-xl hover:bg-slate-100"

@@ -22,7 +22,7 @@ export function LoginScreen(props: LoginScreenProps) {
             <div>
               <p className="text-sm font-black text-brand-700">IdeaFlow</p>
               <h1 className="text-3xl font-black leading-tight text-slate-950 sm:text-5xl">
-                아이디어를 만들고 평가하는 MVP
+                작은 생각을 빛나는 아이디어로
               </h1>
             </div>
           </div>
@@ -69,11 +69,11 @@ export function LoginScreen(props: LoginScreenProps) {
 
         <aside className="hidden bg-brand-600 p-10 text-white lg:grid">
           <div className="self-center rounded-[28px] bg-white/12 p-7 backdrop-blur">
-            <p className="text-sm font-bold text-brand-100">MVP Point Rules</p>
+            <p className="text-sm font-bold text-brand-100">MVP 포인트 규칙</p>
             <div className="mt-6 grid gap-4">
               <PreviewPoint label="가입 보너스" value="+30P" />
               <PreviewPoint label="아이디어 작성" value="+10P" />
-              <PreviewPoint label="AI 평가" value="-5P" />
+              <PreviewPoint label="AI 평가 실행" value="-5P" />
             </div>
           </div>
         </aside>

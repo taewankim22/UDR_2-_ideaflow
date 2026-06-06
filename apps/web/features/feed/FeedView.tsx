@@ -1,10 +1,12 @@
+import { useMemo, useState } from "react";
 import type { IdeaCard, IdeaDetail } from "@ideaflow/shared/types";
-import { Coins, FileText, Heart, Lock, MessageCircle, MoreHorizontal, User } from "lucide-react";
+import { Coins, FileText, Heart, Lock, MessageCircle, MoreHorizontal, Search, User } from "lucide-react";
 import type { FeedTab } from "../../types/app";
 import { TabButton } from "../../components/common/TabButton";
 import { categoryLabels, formatDate, getCoverStyle } from "../../lib/uiConfig";
 
 interface FeedViewProps {
+  mode: "home" | "explore";
   feedTab: FeedTab;
   setFeedTab: (tab: FeedTab) => void;
   ideas: IdeaCard[];
@@ -18,54 +20,114 @@ interface FeedViewProps {
 }
 
 export function FeedView(props: FeedViewProps) {
+  const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const isExplore = props.mode === "explore";
+  const shouldShowSearch = searchOpen;
+  const filteredIdeas = useMemo(() => {
+    const trimmed = query.trim().toLowerCase();
+    if (!trimmed) {
+      return props.ideas;
+    }
+
+    return props.ideas.filter((idea) => {
+      const searchableText = [
+        idea.title,
+        idea.oneLine,
+        idea.authorName,
+        categoryLabels[idea.category],
+        idea.category
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(trimmed);
+    });
+  }, [props.ideas, query]);
+
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
       <section className="min-w-0">
-        <div className="mb-5 overflow-x-auto rounded-[28px] border border-slate-200 bg-white px-4 py-5 shadow-card">
-          <div className="flex min-w-max items-center gap-8">
-            <StoryAvatar label="내 스토리" active image="/profile-avatar.png" />
-            {props.ideas.slice(0, 7).map((idea, index) => (
-              <StoryAvatar key={idea.id} label={idea.authorName || `user_${index + 1}`} />
-            ))}
-            <button className="grid gap-2 text-center text-sm font-bold text-brand-700">
-              <span className="grid h-16 w-16 place-items-center rounded-full border border-brand-200 bg-brand-50">
-                <MoreHorizontal size={28} />
-              </span>
-              더보기
-            </button>
+        {!isExplore ? (
+          <div className="mb-5 overflow-x-auto rounded-[28px] border border-slate-200 bg-white px-4 py-5 shadow-card">
+            <div className="flex min-w-max items-center gap-8">
+              <StoryAvatar label="내 스토리" active image="/profile-avatar.png" />
+              {props.ideas.slice(0, 7).map((idea, index) => (
+                <StoryAvatar key={idea.id} label={idea.authorName || `user_${index + 1}`} />
+              ))}
+              <button className="grid gap-2 text-center text-sm font-bold text-brand-700">
+                <span className="grid h-16 w-16 place-items-center rounded-full border border-brand-200 bg-brand-50">
+                  <MoreHorizontal size={28} />
+                </span>
+                더보기
+              </button>
+            </div>
           </div>
-        </div>
+        ) : null}
 
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div className="inline-flex rounded-2xl bg-white p-1 shadow-sm ring-1 ring-slate-200">
-            <TabButton active={props.feedTab === "latest"} onClick={() => props.setFeedTab("latest")}>
-              최신
-            </TabButton>
-            <TabButton active={props.feedTab === "recommended"} onClick={() => props.setFeedTab("recommended")}>
-              추천
-            </TabButton>
-            <TabButton active={props.feedTab === "mine"} onClick={() => props.setFeedTab("mine")}>
-              내 아이디어
-            </TabButton>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded-2xl bg-white p-1 shadow-sm ring-1 ring-slate-200">
+              <TabButton active={props.feedTab === "latest"} onClick={() => props.setFeedTab("latest")}>
+                최신
+              </TabButton>
+              <TabButton active={props.feedTab === "recommended"} onClick={() => props.setFeedTab("recommended")}>
+                추천
+              </TabButton>
+              <TabButton active={props.feedTab === "mine"} onClick={() => props.setFeedTab("mine")}>
+                내 아이디어
+              </TabButton>
+            </div>
+            <button
+              className={`grid h-11 w-11 place-items-center rounded-2xl shadow-sm ring-1 transition ${
+                shouldShowSearch
+                  ? "bg-brand-600 text-white ring-brand-600"
+                  : "bg-white text-slate-500 ring-slate-200 hover:text-brand-700 hover:ring-brand-100"
+              }`}
+              onClick={() => setSearchOpen((open) => !open)}
+              title="검색"
+            >
+              <Search size={19} />
+            </button>
           </div>
-          <p className="text-sm font-bold text-slate-500">Masonry Grid · {props.ideas.length} cards</p>
+          <p className="text-sm font-bold text-slate-500">
+            {isExplore ? "탐색" : "홈"} · {filteredIdeas.length}개 아이디어
+          </p>
         </div>
 
-        <div className="columns-1 gap-5 md:columns-2 2xl:columns-3">
-          {props.ideas.map((idea, index) => (
-            <IdeaMasonryCard
-              key={idea.id}
-              idea={idea}
-              selectedIdea={props.selectedIdea}
-              isOwn={props.isOwnIdea(idea)}
-              index={index}
-              onSelect={props.onSelect}
-              onUnlock={props.onUnlock}
-              onOpenWhiteboard={props.onOpenWhiteboard}
-              onOpenAI={props.onOpenAI}
+        {shouldShowSearch ? (
+          <label className="mb-5 flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 shadow-sm">
+            <Search size={18} className="text-brand-600" />
+            <input
+              className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-slate-400"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="아이디어 제목, 작성자, 카테고리 검색"
             />
-          ))}
-        </div>
+          </label>
+        ) : null}
+
+        {filteredIdeas.length > 0 ? (
+          <div className="columns-1 gap-5 md:columns-2 2xl:columns-3">
+            {filteredIdeas.map((idea, index) => (
+              <IdeaMasonryCard
+                key={idea.id}
+                idea={idea}
+                selectedIdea={props.selectedIdea}
+                isOwn={props.isOwnIdea(idea)}
+                index={index}
+                onSelect={props.onSelect}
+                onUnlock={props.onUnlock}
+                onOpenWhiteboard={props.onOpenWhiteboard}
+                onOpenAI={props.onOpenAI}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-[22px] border border-dashed border-slate-300 bg-white px-6 py-12 text-center text-sm font-bold text-slate-500">
+            검색 결과가 없습니다.
+          </div>
+        )}
       </section>
 
       <aside className="grid content-start gap-5">
@@ -167,7 +229,7 @@ function IdeaMasonryCard(props: {
                 </>
               ) : (
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-bold text-slate-500">본문이 잠겨 있습니다.</span>
+                  <span className="font-bold text-slate-500">본문은 잠겨 있습니다.</span>
                   <button
                     className="inline-flex h-9 items-center gap-2 rounded-xl bg-brand-600 px-3 text-xs font-black text-white"
                     onClick={(event) => {

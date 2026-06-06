@@ -147,6 +147,15 @@ export function useIdeaFlowController(): IdeaFlowController {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, selectedIdea?.id]);
 
+  useEffect(() => {
+    if (!message) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => setMessage(null), 2400);
+    return () => window.clearTimeout(timer);
+  }, [message]);
+
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsLoading(true);
@@ -215,7 +224,7 @@ export function useIdeaFlowController(): IdeaFlowController {
       return;
     }
     setWhiteboard(result.data);
-    setMessage("화이트보드를 저장했습니다.");
+    setMessage("저장되었습니다.");
     setIsSavingBoard(false);
   }
 
