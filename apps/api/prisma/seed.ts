@@ -1,7 +1,55 @@
 import { PrismaClient } from "@prisma/client";
-import { WHITEBOARD_NODE_DEFINITIONS } from "@ideaflow/shared/types";
+import {
+  WHITEBOARD_NODE_DEFINITIONS,
+  type WhiteboardEdge,
+  type WhiteboardNodeKey,
+  type WhiteboardViewport
+} from "@ideaflow/shared/types";
 
 const prisma = new PrismaClient();
+
+const defaultViewport: WhiteboardViewport = { x: 0, y: 0, zoom: 1 };
+
+const defaultPositions: Record<WhiteboardNodeKey, { x: number; y: number }> = {
+  problemContext: { x: 80, y: 80 },
+  targetUser: { x: 80, y: 290 },
+  currentAlternatives: { x: 80, y: 500 },
+  solutionConcept: { x: 390, y: 80 },
+  coreValue: { x: 390, y: 290 },
+  revenueModel: { x: 700, y: 290 },
+  validationPlan: { x: 390, y: 500 }
+};
+
+const defaultEdges: WhiteboardEdge[] = [
+  { id: "edge-problem-solution", source: "core-problemContext", target: "core-solutionConcept" },
+  { id: "edge-target-value", source: "core-targetUser", target: "core-coreValue" },
+  { id: "edge-solution-value", source: "core-solutionConcept", target: "core-coreValue" },
+  { id: "edge-value-mvp", source: "core-coreValue", target: "core-validationPlan" }
+];
+
+function createCoreNode(key: WhiteboardNodeKey) {
+  const definition = WHITEBOARD_NODE_DEFINITIONS.find((node) => node.key === key);
+  const label = definition?.label ?? key;
+  return {
+    id: `core-${key}`,
+    type: "core",
+    key,
+    label,
+    title: label,
+    content: "",
+    position: defaultPositions[key],
+    size: { width: 240, height: 150 },
+    locked: true
+  };
+}
+
+function defaultWhiteboardPayload() {
+  return {
+    nodes: WHITEBOARD_NODE_DEFINITIONS.map((node) => createCoreNode(node.key)),
+    edges: defaultEdges,
+    viewport: defaultViewport
+  };
+}
 
 const pointRules = [
   { action: "SIGNUP_BONUS", delta: 30, label: "가입 보너스" },
@@ -67,13 +115,12 @@ async function main() {
 
   await prisma.whiteboard.upsert({
     where: { ideaId: idea.id },
-    update: {},
+    update: {
+      nodes: defaultWhiteboardPayload()
+    },
     create: {
       ideaId: idea.id,
-      nodes: WHITEBOARD_NODE_DEFINITIONS.map((node) => ({
-        ...node,
-        content: ""
-      }))
+      nodes: defaultWhiteboardPayload()
     }
   });
 }

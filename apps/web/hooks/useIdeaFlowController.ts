@@ -7,10 +7,14 @@ import type {
   AuthSession,
   CreateIdeaRequest,
   IdeaCard,
+  IdeaComment,
   IdeaDetail,
   PointSummary,
   Provider,
-  Whiteboard
+  Whiteboard,
+  WhiteboardAssistantMessage,
+  WhiteboardAssistantRequest,
+  WhiteboardAssistantResponse
 } from "@ideaflow/shared/types";
 import { createIdeaFlowClient } from "../lib/client";
 import type { AppView, FeedTab, IdeaFlowController, LoginFormState } from "../types/app";
@@ -41,7 +45,9 @@ export function useIdeaFlowController(): IdeaFlowController {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [ideas, setIdeas] = useState<IdeaCard[]>([]);
   const [selectedIdea, setSelectedIdea] = useState<IdeaDetail | null>(null);
+  const [comments, setComments] = useState<IdeaComment[]>([]);
   const [whiteboard, setWhiteboard] = useState<Whiteboard | null>(null);
+  const [whiteboardAssistantMessages, setWhiteboardAssistantMessages] = useState<WhiteboardAssistantMessage[]>([]);
   const [evaluation, setEvaluation] = useState<AIEvaluation | null>(null);
   const [points, setPoints] = useState<PointSummary | null>(null);
   const [view, setView] = useState<AppView>("feed");
@@ -50,6 +56,7 @@ export function useIdeaFlowController(): IdeaFlowController {
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingBoard, setIsSavingBoard] = useState(false);
   const [isRunningAI, setIsRunningAI] = useState(false);
+  const [isPostingComment, setIsPostingComment] = useState(false);
   const [loginForm, setLoginForm] = useState<LoginFormState>(initialLoginForm);
   const [ideaForm, setIdeaForm] = useState<CreateIdeaRequest>(initialIdeaForm);
 
@@ -62,7 +69,9 @@ export function useIdeaFlowController(): IdeaFlowController {
         setSession(null);
         setIdeas([]);
         setSelectedIdea(null);
+        setComments([]);
         setWhiteboard(null);
+        setWhiteboardAssistantMessages([]);
         setEvaluation(null);
         setPoints(null);
         setView("feed");
@@ -87,6 +96,14 @@ export function useIdeaFlowController(): IdeaFlowController {
         return;
       }
       setSelectedIdea(result.data);
+      const commentsResult = await client.listComments(id);
+      if (commentsResult.success) {
+        setComments(commentsResult.data);
+      } else {
+        setComments([]);
+        handleFailure(commentsResult);
+        return;
+      }
       setMessage(null);
     },
     [client, handleFailure]
@@ -127,6 +144,18 @@ export function useIdeaFlowController(): IdeaFlowController {
         return;
       }
       setWhiteboard(result.data);
+    },
+    [client, handleFailure]
+  );
+
+  const loadWhiteboardAssistantMessages = useCallback(
+    async (ideaId: string) => {
+      const result = await client.getWhiteboardAssistantMessages(ideaId);
+      if (!result.success) {
+        handleFailure(result);
+        return;
+      }
+      setWhiteboardAssistantMessages(result.data);
     },
     [client, handleFailure]
   );
@@ -173,6 +202,7 @@ export function useIdeaFlowController(): IdeaFlowController {
   useEffect(() => {
     if (view === "whiteboard" && selectedIdea && isOwnIdea(selectedIdea)) {
       void loadWhiteboard(selectedIdea.id);
+      void loadWhiteboardAssistantMessages(selectedIdea.id);
     }
     if (view === "ai" && selectedIdea && isOwnIdea(selectedIdea)) {
       void loadEvaluation(selectedIdea.id);
@@ -181,7 +211,7 @@ export function useIdeaFlowController(): IdeaFlowController {
     if (view === "profile") {
       void refreshPoints();
     }
-  }, [view, selectedIdea?.id, isOwnIdea, loadWhiteboard, loadEvaluation, refreshPoints]);
+  }, [view, selectedIdea?.id, isOwnIdea, loadWhiteboard, loadWhiteboardAssistantMessages, loadEvaluation, refreshPoints]);
 
   useEffect(() => {
     if (!message) return;
@@ -227,7 +257,9 @@ export function useIdeaFlowController(): IdeaFlowController {
     setSession(null);
     setIdeas([]);
     setSelectedIdea(null);
+    setComments([]);
     setWhiteboard(null);
+    setWhiteboardAssistantMessages([]);
     setEvaluation(null);
     setPoints(null);
     setView("feed");
@@ -244,6 +276,8 @@ export function useIdeaFlowController(): IdeaFlowController {
       }
       setIdeaForm(initialIdeaForm);
       setSelectedIdea(result.data);
+      setComments([]);
+      setWhiteboardAssistantMessages([]);
       setView("whiteboard");
       await loadAppData(result.data.id);
       await loadWhiteboard(result.data.id);
@@ -277,11 +311,49 @@ export function useIdeaFlowController(): IdeaFlowController {
     }
   }
 
+  async function createComment(content: string) {
+    if (!selectedIdea) return;
+    const trimmed = content.trim();
+    if (!trimmed) {
+      setMessage("댓글 내용을 입력해주세요.");
+      return;
+    }
+
+    setIsPostingComment(true);
+    try {
+      const result = await client.createComment(selectedIdea.id, { content: trimmed });
+      if (!result.success) {
+        handleFailure(result);
+        return;
+      }
+
+      setComments((previous) => [...previous, result.data]);
+      setSelectedIdea((previous) =>
+        previous && previous.id === result.data.ideaId
+          ? { ...previous, commentCount: previous.commentCount + 1 }
+          : previous
+      );
+      setIdeas((previous) =>
+        previous.map((idea) =>
+          idea.id === result.data.ideaId ? { ...idea, commentCount: idea.commentCount + 1 } : idea
+        )
+      );
+      await refreshPoints();
+      setMessage("댓글을 작성하고 +3P를 얻었습니다.");
+    } finally {
+      setIsPostingComment(false);
+    }
+  }
+
   async function saveWhiteboard() {
     if (!whiteboard) return;
     setIsSavingBoard(true);
     try {
-      const result = await client.updateWhiteboard(whiteboard.ideaId, { nodes: whiteboard.nodes });
+      const result = await client.updateWhiteboard(whiteboard.ideaId, {
+        nodes: whiteboard.nodes,
+        edges: whiteboard.edges,
+        viewport: whiteboard.viewport
+      });
       if (!result.success) {
         handleFailure(result);
         return;
@@ -291,6 +363,28 @@ export function useIdeaFlowController(): IdeaFlowController {
     } finally {
       setIsSavingBoard(false);
     }
+  }
+
+  async function askWhiteboardAssistant(input: WhiteboardAssistantRequest): Promise<ApiResponse<WhiteboardAssistantResponse>> {
+    const ideaId = input.board?.ideaId ?? selectedIdea?.id;
+    if (!ideaId) {
+      return {
+        success: false,
+        error: {
+          code: "NOT_FOUND",
+          message: "AI 어시스턴트를 실행할 아이디어가 없습니다."
+        }
+      };
+    }
+
+    const result = await client.askWhiteboardAssistant(ideaId, input);
+    if (!result.success) {
+      handleFailure(result);
+    }
+    if (result.success) {
+      setWhiteboardAssistantMessages((previous) => [...previous, ...result.data.messages]);
+    }
+    return result;
   }
 
   async function runAI() {
@@ -316,7 +410,9 @@ export function useIdeaFlowController(): IdeaFlowController {
 
   function pickOwnIdea(id: string) {
     void selectIdea(id);
+    setComments([]);
     setWhiteboard(null);
+    setWhiteboardAssistantMessages([]);
     setEvaluation(null);
   }
 
@@ -329,7 +425,9 @@ export function useIdeaFlowController(): IdeaFlowController {
       visibleIdeas,
       ownIdeas,
       selectedIdea,
+      comments,
       whiteboard,
+      whiteboardAssistantMessages,
       evaluation,
       points,
       view,
@@ -338,6 +436,7 @@ export function useIdeaFlowController(): IdeaFlowController {
       isLoading,
       isSavingBoard,
       isRunningAI,
+      isPostingComment,
       loginForm,
       ideaForm,
       balance,
@@ -349,6 +448,7 @@ export function useIdeaFlowController(): IdeaFlowController {
       setLoginForm,
       setIdeaForm,
       setWhiteboard,
+      loadWhiteboardAssistantMessages,
       refresh: loadAppData,
       login,
       socialLogin,
@@ -358,7 +458,9 @@ export function useIdeaFlowController(): IdeaFlowController {
       pickOwnIdea,
       unlockIdea,
       likeIdea,
+      createComment,
       saveWhiteboard,
+      askWhiteboardAssistant,
       runAI
     }
   };

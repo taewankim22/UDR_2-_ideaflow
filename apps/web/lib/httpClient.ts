@@ -2,14 +2,19 @@ import type {
   AIEvaluation,
   ApiResponse,
   AuthSession,
+  CreateCommentRequest,
   CreateIdeaRequest,
   ErrorCode,
   IdeaCard,
+  IdeaComment,
   IdeaDetail,
   LoginRequest,
   PointSummary,
   UpdateWhiteboardRequest,
-  Whiteboard
+  Whiteboard,
+  WhiteboardAssistantMessage,
+  WhiteboardAssistantRequest,
+  WhiteboardAssistantResponse
 } from "@ideaflow/shared/types";
 import type { IdeaFlowClient } from "./client";
 
@@ -111,10 +116,22 @@ export function createHttpClient(): IdeaFlowClient {
     createIdea: (input) => request<IdeaDetail>("/ideas", { method: "POST", body: JSON.stringify(input) }),
     unlockIdea: (id) => request<IdeaDetail>(`/ideas/${id}/unlock`, { method: "POST" }),
     likeIdea: (id) => request<IdeaCard>(`/ideas/${id}/like`, { method: "POST" }),
+    listComments: (id) => request<IdeaComment[]>(`/ideas/${id}/comments`),
+    createComment: (id, input: CreateCommentRequest) =>
+      request<IdeaComment>(`/ideas/${id}/comments`, {
+        method: "POST",
+        body: JSON.stringify(input)
+      }),
     getWhiteboard: (id) => request<Whiteboard>(`/ideas/${id}/whiteboard`),
     updateWhiteboard: (id, input: UpdateWhiteboardRequest) =>
       request<Whiteboard>(`/ideas/${id}/whiteboard`, {
         method: "PUT",
+        body: JSON.stringify(input)
+      }),
+    getWhiteboardAssistantMessages: (id) => request<WhiteboardAssistantMessage[]>(`/ideas/${id}/whiteboard/assistant/messages`),
+    askWhiteboardAssistant: (id, input: WhiteboardAssistantRequest) =>
+      request<WhiteboardAssistantResponse>(`/ideas/${id}/whiteboard/assistant`, {
+        method: "POST",
         body: JSON.stringify(input)
       }),
     getEvaluation: (id) => request<AIEvaluation | null>(`/ideas/${id}/ai/evaluation`),

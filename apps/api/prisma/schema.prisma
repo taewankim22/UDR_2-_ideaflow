@@ -32,6 +32,7 @@ model User {
   updatedAt       DateTime           @updatedAt
   authIdentities  AuthIdentity[]
   ideas           Idea[]
+  comments        IdeaComment[]
   likedIdeas      IdeaLike[]
   pointLedger     PointTransaction[]
   unlocks         IdeaUnlock[]
@@ -68,6 +69,8 @@ model Idea {
   author         User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
   whiteboard     Whiteboard?
   aiEvaluation   AIEvaluation?
+  assistantMessages WhiteboardAssistantMessage[]
+  comments       IdeaComment[]
   likes          IdeaLike[]
   unlocks        IdeaUnlock[]
   pointLedger    PointTransaction[]
@@ -97,6 +100,21 @@ model AIEvaluation {
   idea         Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
 
   @@map("ai_evaluations")
+}
+
+model WhiteboardAssistantMessage {
+  id            String   @id @default(cuid())
+  ideaId        String
+  role          String
+  content       String
+  targetNodeKey String?
+  suggestion    String?
+  followUps     Json?
+  createdAt     DateTime @default(now())
+  idea          Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@index([ideaId, createdAt])
+  @@map("whiteboard_assistant_messages")
 }
 
 model PointRule {
@@ -148,4 +166,18 @@ model IdeaLike {
   @@unique([userId, ideaId])
   @@index([ideaId])
   @@map("idea_likes")
+}
+
+model IdeaComment {
+  id        String   @id @default(cuid())
+  ideaId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([ideaId, createdAt])
+  @@index([authorId, createdAt])
+  @@map("idea_comments")
 }

@@ -4,10 +4,15 @@ import type {
   AuthSession,
   CreateIdeaRequest,
   IdeaCard,
+  IdeaComment,
   IdeaDetail,
   PointSummary,
   Provider,
-  Whiteboard
+  Whiteboard,
+  WhiteboardAssistantMessage,
+  WhiteboardAssistantRequest,
+  WhiteboardAssistantResponse,
+  ApiResponse
 } from "@ideaflow/shared/types";
 
 export type AppView = "feed" | "explore" | "compose" | "whiteboard" | "ai" | "profile";
@@ -24,6 +29,7 @@ export interface AppActions {
   setLoginForm: Dispatch<SetStateAction<LoginFormState>>;
   setIdeaForm: Dispatch<SetStateAction<CreateIdeaRequest>>;
   setWhiteboard: Dispatch<SetStateAction<Whiteboard | null>>;
+  loadWhiteboardAssistantMessages: (ideaId: string) => Promise<void>;
   refresh: () => Promise<void>;
   login: (event: FormEvent<HTMLFormElement>) => Promise<void>;
   socialLogin: (provider: Provider) => Promise<void>;
@@ -33,7 +39,9 @@ export interface AppActions {
   pickOwnIdea: (id: string) => void;
   unlockIdea: () => Promise<void>;
   likeIdea: (id: string) => Promise<void>;
+  createComment: (content: string) => Promise<void>;
   saveWhiteboard: () => Promise<void>;
+  askWhiteboardAssistant: (input: WhiteboardAssistantRequest) => Promise<ApiResponse<WhiteboardAssistantResponse>>;
   runAI: () => Promise<void>;
 }
 
@@ -43,8 +51,10 @@ export interface AppState {
   visibleIdeas: IdeaCard[];
   ownIdeas: IdeaCard[];
   selectedIdea: IdeaDetail | null;
+  comments: IdeaComment[];
   whiteboard: Whiteboard | null;
   evaluation: AIEvaluation | null;
+  whiteboardAssistantMessages: WhiteboardAssistantMessage[];
   points: PointSummary | null;
   view: AppView;
   feedTab: FeedTab;
@@ -52,6 +62,7 @@ export interface AppState {
   isLoading: boolean;
   isSavingBoard: boolean;
   isRunningAI: boolean;
+  isPostingComment: boolean;
   loginForm: LoginFormState;
   ideaForm: CreateIdeaRequest;
   balance: number;

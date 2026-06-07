@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import type { IdeaCard, IdeaDetail } from "@ideaflow/shared/types";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import type { IdeaCard, IdeaComment, IdeaDetail } from "@ideaflow/shared/types";
 import { Coins, FileText, Heart, Loader2, Lock, MessageCircle, Search, User } from "lucide-react";
 import type { FeedTab } from "../../types/app";
 import { TabButton } from "../../components/common/TabButton";
@@ -11,11 +11,14 @@ interface FeedViewProps {
   setFeedTab: (tab: FeedTab) => void;
   ideas: IdeaCard[];
   selectedIdea: IdeaDetail | null;
+  comments: IdeaComment[];
   isOwnIdea: (idea: IdeaCard | IdeaDetail | null) => boolean;
   balance: number;
+  isPostingComment: boolean;
   onSelect: (id: string) => Promise<void>;
   onUnlock: () => Promise<void>;
   onLike: (id: string) => Promise<void>;
+  onCreateComment: (content: string) => Promise<void>;
   onOpenWhiteboard: () => void;
   onOpenAI: () => void;
 }
@@ -160,8 +163,11 @@ export function FeedView(props: FeedViewProps) {
 
         <IdeaSideDetail
           idea={props.selectedIdea}
+          comments={props.comments}
           isOwn={props.isOwnIdea(props.selectedIdea)}
+          isPostingComment={props.isPostingComment}
           onUnlock={props.onUnlock}
+          onCreateComment={props.onCreateComment}
           onOpenWhiteboard={props.onOpenWhiteboard}
           onOpenAI={props.onOpenAI}
         />
@@ -286,11 +292,25 @@ function IdeaMasonryCard(props: {
 
 function IdeaSideDetail(props: {
   idea: IdeaDetail | null;
+  comments: IdeaComment[];
   isOwn: boolean;
+  isPostingComment: boolean;
   onUnlock: () => Promise<void>;
+  onCreateComment: (content: string) => Promise<void>;
   onOpenWhiteboard: () => void;
   onOpenAI: () => void;
 }) {
+  const [commentText, setCommentText] = useState("");
+
+  async function submitComment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const content = commentText.trim();
+    if (!content) return;
+
+    await props.onCreateComment(content);
+    setCommentText("");
+  }
+
   if (!props.idea) {
     return (
       <div className="rounded-[24px] border border-slate-200 bg-white p-6 text-center shadow-card">
@@ -331,6 +351,65 @@ function IdeaSideDetail(props: {
           </p>
         </div>
       )}
+
+      <div className="mt-5 border-t border-slate-100 pt-5">
+        <div className="flex items-center justify-between">
+          <h3 className="inline-flex items-center gap-2 text-sm font-black text-slate-950">
+            <MessageCircle size={16} className="text-brand-600" />
+            댓글
+          </h3>
+          <span className="text-xs font-black text-slate-400">{props.idea.commentCount}개</span>
+        </div>
+
+        <div className="mt-3 grid max-h-56 gap-3 overflow-y-auto pr-1">
+          {props.comments.length > 0 ? (
+            props.comments.map((comment) => (
+              <div key={comment.id} className="rounded-2xl bg-slate-50 p-3">
+                <div className="mb-2 flex items-center gap-2">
+                  {comment.authorProfileImageUrl ? (
+                    <img
+                      src={comment.authorProfileImageUrl}
+                      alt=""
+                      className="h-7 w-7 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="grid h-7 w-7 place-items-center rounded-full bg-brand-100 text-xs font-black text-brand-700">
+                      {comment.authorName.slice(0, 1)}
+                    </span>
+                  )}
+                  <div className="min-w-0">
+                    <strong className="block truncate text-xs font-black text-slate-900">{comment.authorName}</strong>
+                    <span className="text-[11px] font-semibold text-slate-400">{formatDate(comment.createdAt)}</span>
+                  </div>
+                </div>
+                <p className="text-sm leading-6 text-slate-600">{comment.content}</p>
+              </div>
+            ))
+          ) : (
+            <p className="rounded-2xl bg-slate-50 px-4 py-5 text-center text-sm font-bold text-slate-400">
+              아직 댓글이 없습니다.
+            </p>
+          )}
+        </div>
+
+        <form className="mt-3 grid gap-2" onSubmit={submitComment}>
+          <textarea
+            className="min-h-20 resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold leading-6 outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+            value={commentText}
+            maxLength={800}
+            onChange={(event) => setCommentText(event.target.value)}
+            placeholder="아이디어에 대한 의견을 남겨보세요."
+          />
+          <button
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-brand-600 text-sm font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+            disabled={props.isPostingComment || !commentText.trim()}
+            type="submit"
+          >
+            {props.isPostingComment ? <Loader2 className="spin" size={16} /> : null}
+            댓글 등록
+          </button>
+        </form>
+      </div>
 
       {props.isOwn ? (
         <div className="mt-5 grid grid-cols-2 gap-2">

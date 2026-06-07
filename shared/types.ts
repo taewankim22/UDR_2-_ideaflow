@@ -44,6 +44,15 @@ export interface IdeaDetail extends IdeaCard {
   solution: string;
 }
 
+export interface IdeaComment {
+  id: string;
+  ideaId: string;
+  authorName: string;
+  authorProfileImageUrl: string | null;
+  content: string;
+  createdAt: string;
+}
+
 export type WhiteboardNodeKey =
   | "problemContext"
   | "targetUser"
@@ -53,10 +62,46 @@ export type WhiteboardNodeKey =
   | "revenueModel"
   | "validationPlan";
 
-export interface WhiteboardNode {
+export type WhiteboardNodeType = "core" | "memo" | "ai-question" | "risk" | "opportunity";
+
+export interface WhiteboardNodeDefinition {
   key: WhiteboardNodeKey;
   label: string;
+}
+
+export interface WhiteboardPosition {
+  x: number;
+  y: number;
+}
+
+export interface WhiteboardSize {
+  width: number;
+  height: number;
+}
+
+export interface WhiteboardNode {
+  id: string;
+  type: WhiteboardNodeType;
+  key?: WhiteboardNodeKey;
+  label: string;
+  title: string;
   content: string;
+  position: WhiteboardPosition;
+  size?: WhiteboardSize;
+  locked?: boolean;
+}
+
+export interface WhiteboardEdge {
+  id: string;
+  source: string;
+  target: string;
+  label?: string;
+}
+
+export interface WhiteboardViewport {
+  x: number;
+  y: number;
+  zoom: number;
 }
 
 export const WHITEBOARD_NODE_KEYS = [
@@ -69,7 +114,7 @@ export const WHITEBOARD_NODE_KEYS = [
   "validationPlan"
 ] as const;
 
-export const WHITEBOARD_NODE_DEFINITIONS: ReadonlyArray<Pick<WhiteboardNode, "key" | "label">> = [
+export const WHITEBOARD_NODE_DEFINITIONS: ReadonlyArray<WhiteboardNodeDefinition> = [
   { key: "problemContext", label: "문제 맥락" },
   { key: "targetUser", label: "타깃 사용자" },
   { key: "currentAlternatives", label: "현재 대안" },
@@ -83,6 +128,8 @@ export interface Whiteboard {
   ideaId: string;
   updatedAt: string;
   nodes: WhiteboardNode[];
+  edges: WhiteboardEdge[];
+  viewport: WhiteboardViewport;
 }
 
 export interface AIEvaluation {
@@ -97,6 +144,46 @@ export interface AIEvaluation {
   };
   summary: string;
   suggestions: string[];
+  report: AIEvaluationReport;
+  createdAt: string;
+}
+
+export interface AIEvaluationReport {
+  ideaSummary: string;
+  problem: string;
+  solution: string;
+  mvp: string;
+  developmentPlan: string[];
+  marketAnalysis: string;
+  targetAudience: string;
+  keyRisks: string[];
+}
+
+export interface WhiteboardAssistantRequest {
+  message: string;
+  targetNodeKey?: WhiteboardNodeKey;
+  board?: Whiteboard;
+  history?: WhiteboardAssistantMessage[];
+}
+
+export type WhiteboardAssistantRole = "user" | "assistant";
+
+export interface WhiteboardAssistantMessage {
+  id: string;
+  role: WhiteboardAssistantRole;
+  content: string;
+  targetNodeKey?: WhiteboardNodeKey;
+  suggestion?: string;
+  followUps?: string[];
+  createdAt: string;
+}
+
+export interface WhiteboardAssistantResponse {
+  reply: string;
+  targetNodeKey: WhiteboardNodeKey;
+  suggestion: string;
+  followUps: string[];
+  messages: WhiteboardAssistantMessage[];
   createdAt: string;
 }
 
@@ -149,6 +236,12 @@ export interface CreateIdeaRequest {
   coverImageUrl?: string | null;
 }
 
+export interface CreateCommentRequest {
+  content: string;
+}
+
 export interface UpdateWhiteboardRequest {
   nodes: WhiteboardNode[];
+  edges?: WhiteboardEdge[];
+  viewport?: WhiteboardViewport;
 }

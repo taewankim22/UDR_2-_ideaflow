@@ -2,13 +2,18 @@ import type {
   AIEvaluation,
   ApiResponse,
   AuthSession,
+  CreateCommentRequest,
   CreateIdeaRequest,
   IdeaCard,
+  IdeaComment,
   IdeaDetail,
   LoginRequest,
   PointSummary,
   UpdateWhiteboardRequest,
-  Whiteboard
+  Whiteboard,
+  WhiteboardAssistantMessage,
+  WhiteboardAssistantRequest,
+  WhiteboardAssistantResponse
 } from "@ideaflow/shared/types";
 import { createHttpClient } from "./httpClient";
 import { createMockClient } from "./mockClient";
@@ -22,8 +27,12 @@ export interface IdeaFlowClient {
   createIdea(input: CreateIdeaRequest): Promise<ApiResponse<IdeaDetail>>;
   unlockIdea(id: string): Promise<ApiResponse<IdeaDetail>>;
   likeIdea(id: string): Promise<ApiResponse<IdeaCard>>;
+  listComments(id: string): Promise<ApiResponse<IdeaComment[]>>;
+  createComment(id: string, input: CreateCommentRequest): Promise<ApiResponse<IdeaComment>>;
   getWhiteboard(id: string): Promise<ApiResponse<Whiteboard>>;
   updateWhiteboard(id: string, input: UpdateWhiteboardRequest): Promise<ApiResponse<Whiteboard>>;
+  getWhiteboardAssistantMessages(id: string): Promise<ApiResponse<WhiteboardAssistantMessage[]>>;
+  askWhiteboardAssistant(id: string, input: WhiteboardAssistantRequest): Promise<ApiResponse<WhiteboardAssistantResponse>>;
   getEvaluation(id: string): Promise<ApiResponse<AIEvaluation | null>>;
   evaluateIdea(id: string): Promise<ApiResponse<AIEvaluation>>;
   getPoints(): Promise<ApiResponse<PointSummary>>;

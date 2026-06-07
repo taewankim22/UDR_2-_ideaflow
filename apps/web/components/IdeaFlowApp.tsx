@@ -43,11 +43,14 @@ export function IdeaFlowApp() {
           setFeedTab={actions.setFeedTab}
           ideas={state.visibleIdeas}
           selectedIdea={state.selectedIdea}
+          comments={state.comments}
           isOwnIdea={state.isOwnIdea}
           balance={state.balance}
+          isPostingComment={state.isPostingComment}
           onSelect={actions.selectIdea}
           onUnlock={actions.unlockIdea}
           onLike={actions.likeIdea}
+          onCreateComment={actions.createComment}
           onOpenWhiteboard={() => actions.setView("whiteboard")}
           onOpenAI={() => actions.setView("ai")}
         />
@@ -67,10 +70,12 @@ export function IdeaFlowApp() {
           ideas={state.ownIdeas}
           selectedIdea={state.selectedIdea}
           whiteboard={state.whiteboard}
+          assistantMessages={state.whiteboardAssistantMessages}
           isSaving={state.isSavingBoard}
           onPickIdea={actions.pickOwnIdea}
           onChange={actions.setWhiteboard}
           onSave={actions.saveWhiteboard}
+          onAskAssistant={actions.askWhiteboardAssistant}
           onNext={() => actions.setView("ai")}
         />
       ) : null}
