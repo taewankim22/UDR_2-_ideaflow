@@ -1,5 +1,6 @@
 import {
   WHITEBOARD_NODE_DEFINITIONS,
+  WHITEBOARD_NODE_KEYS,
   type IdeaDetail,
   type Whiteboard,
   type WhiteboardAssistantMessage,
@@ -115,28 +116,36 @@ function buildMessages(
   ];
 }
 
-function buildFounderPrompt(idea: IdeaDetail, board: Whiteboard, input: WhiteboardAssistantRequest, fallbackTarget: WhiteboardNodeKey) {
+// 페르소나·원칙·대화 규칙을 system instruction으로 고정한다.
+// 매 호출의 가변 맥락(아이디어/보드/대화)은 buildFounderContext가 따로 만든다.
+const FOUNDER_SYSTEM_INSTRUCTION = [
+  "You are IdeaFlow's AI founder coach for an early-stage software startup whiteboard.",
+  "Do not impersonate, quote, or claim to be any real person or founder. Use the shared mental models of experienced software founders.",
+  "Always respond in natural Korean. Be candid, specific, and constructive — never generic praise or filler.",
+  "",
+  "Founder mental models:",
+  founderPrinciples,
+  "",
+  "대화 규칙:",
+  "- 사용자의 직전 메시지에 먼저 직접 반응한 뒤, 한 발 더 깊이 파고든다.",
+  "- 추상적인 칭찬 대신, 보드의 실제 내용을 인용하며 무엇이 사실이고 무엇이 아직 검증 안 된 가설인지 구분한다.",
+  "- 한 번에 하나의 노드에만 집중하고, 사용자가 바로 보드에 붙여넣을 수 있는 구체적인 제안을 만든다.",
+  "- 사용자가 특정 노드를 요청하지 않았다면, 가장 약하거나 가장 중요한 노드를 직접 고른다.",
+  "",
+  "출력 규칙:",
+  "- reply: 한국어 3~5문장. 반드시 불편하지만 유용한 지적 1개를 포함한다.",
+  "- targetNodeKey: 허용된 key 중 하나.",
+  "- suggestion: 대상 노드에 그대로 넣을 수 있는 구체적 한국어 문장. 마크다운 표 금지.",
+  "- followUps: 증거와 다음 행동을 끌어내는 날카로운 한국어 질문 3개."
+].join("\n");
+
+function buildFounderContext(
+  idea: IdeaDetail,
+  board: Whiteboard,
+  input: WhiteboardAssistantRequest,
+  fallbackTarget: WhiteboardNodeKey
+) {
   return [
-    "You are IdeaFlow's AI founder coach for a software startup whiteboard.",
-    "Do not impersonate, quote, or claim to be any real founder. Use the shared mental models of successful software founders.",
-    "Respond in Korean. Be candid, specific, and constructive. Avoid generic encouragement.",
-    "",
-    "Founder mental models:",
-    founderPrinciples,
-    "",
-    "Your job:",
-    "1. Read the whole whiteboard and recent conversation.",
-    "2. Identify the weakest or most important node unless the user requested a target node.",
-    "3. Give founder-style feedback: painful problem, narrow ICP, existing alternative, 10x value, MVP experiment, distribution, payment, risk.",
-    "4. Produce one concrete node suggestion that the user can apply to the board.",
-    "5. Ask high-leverage follow-up questions that force evidence and next action.",
-    "",
-    "Output only JSON. Shape: { reply, targetNodeKey, suggestion, followUps }.",
-    "reply: 3-5 concise Korean sentences. Include one uncomfortable but useful critique.",
-    "targetNodeKey: one allowed key.",
-    "suggestion: concrete Korean text for the target node. No markdown table.",
-    "followUps: 3 short Korean questions.",
-    "",
     `Allowed targetNodeKey values: ${WHITEBOARD_NODE_DEFINITIONS.map((node) => node.key).join(", ")}`,
     `Default targetNodeKey if uncertain: ${fallbackTarget}`,
     `Focus guide for target node: ${nodeFocus[fallbackTarget]}`,
@@ -218,22 +227,25 @@ export async function generateWhiteboardAssistant(
   }
 
   try {
-    const { GoogleGenAI } = await import("@google/genai");
+    const { GoogleGenAI, Type } = await import("@google/genai");
     const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: buildFounderPrompt(idea, board, input, fallback.targetNodeKey)
-            }
-          ]
-        }
-      ],
+      contents: buildFounderContext(idea, board, input, fallback.targetNodeKey),
       config: {
-        responseMimeType: "application/json"
+        systemInstruction: FOUNDER_SYSTEM_INSTRUCTION,
+        temperature: 0.6,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            reply: { type: Type.STRING },
+            targetNodeKey: { type: Type.STRING, enum: [...WHITEBOARD_NODE_KEYS] },
+            suggestion: { type: Type.STRING },
+            followUps: { type: Type.ARRAY, items: { type: Type.STRING } }
+          },
+          required: ["reply", "targetNodeKey", "suggestion", "followUps"]
+        }
       }
     });
 
