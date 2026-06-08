@@ -129,11 +129,10 @@ export function WhiteboardView(props: WhiteboardViewProps) {
     return () => window.clearTimeout(timer);
   }, [isDirty, isSaving, onSave]);
 
-  if (!selectedOwnIdea) {
-    return <EmptyState icon={<PanelTop className="mx-auto text-brand-600" size={42} />} title="화이트보드를 만들 아이디어가 없습니다." />;
-  }
-
-  const board = props.whiteboard?.ideaId === selectedOwnIdea.id ? props.whiteboard : makeEmptyBoard(selectedOwnIdea.id);
+   const board =
+    props.whiteboard && props.whiteboard.ideaId === selectedOwnIdea?.id
+      ? props.whiteboard
+      : makeEmptyBoard(selectedOwnIdea?.id ?? "");
   const viewport = board.viewport ?? defaultViewport;
   const filledCount = boardOrder.filter((key) => getBoardNode(board, key).content.trim()).length;
   const nextBlankKey = boardOrder.find((key) => !getBoardNode(board, key).content.trim()) ?? null;
@@ -202,7 +201,11 @@ export function WhiteboardView(props: WhiteboardViewProps) {
       window.removeEventListener("pointermove", handleMove);
       window.removeEventListener("pointerup", handleUp);
     };
-  }, [board, canvasSize.height, canvasSize.width, dragState, props, viewport.zoom]);
+    }, [board, canvasSize.height, canvasSize.width, dragState, props, viewport.zoom]);
+
+  if (!selectedOwnIdea) {
+    return <EmptyState icon={<PanelTop className="mx-auto text-brand-600" size={42} />} title="화이트보드를 만들 아이디어가 없습니다." />;
+  }
 
   function updateNode(key: WhiteboardNodeKey, content: string) {
     setIsDirty(true);
@@ -410,16 +413,17 @@ export function WhiteboardView(props: WhiteboardViewProps) {
           </div>
         </div>
 
-        <aside className="flex h-[720px] min-h-0 flex-col border-l border-slate-200 bg-white p-5">
+                        <aside className="flex h-[720px] flex-col border-l border-slate-200 bg-white p-5">
           <div className="flex items-center gap-2 text-lg font-black">
             <Bot className="text-brand-600" size={24} />
             AI Assistant
           </div>
           <p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
             현재 보드 상태를 API로 보내고, 돌아온 제안을 원하는 노드에 바로 적용할 수 있습니다.
-          </p>
+                    </p>
 
-          <div className="mt-5 min-h-0 flex-1 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-3">
+          <div className="mt-4 flex min-h-0 flex-1 flex-col overflow-y-auto pr-1">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
             {props.assistantMessages.length === 0 ? (
               <div className="rounded-2xl border border-brand-100 bg-brand-50 p-4 text-sm font-semibold leading-6 text-brand-800">
                 {assistantMessage}
@@ -501,7 +505,9 @@ export function WhiteboardView(props: WhiteboardViewProps) {
             </div>
           ) : null}
 
-          <div className="mt-auto flex shrink-0 items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2">
+                    </div>
+
+          <div className="mt-3 flex shrink-0 items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2">
             <textarea
               className="max-h-28 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm font-semibold leading-5 text-slate-700 outline-none placeholder:text-slate-400"
               value={assistantInput}

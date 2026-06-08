@@ -56,12 +56,12 @@ const defaultEdges: WhiteboardEdge[] = [
 ];
 
 const createIdeaSchema = z.object({
-  title: z.string().trim().min(2).max(80),
-  oneLine: z.string().trim().min(5).max(140),
-  problem: z.string().trim().min(10).max(2000),
-  solution: z.string().trim().min(10).max(2000),
+  title: z.string().trim().min(2, "제목은 2자 이상 입력해 주세요.").max(80, "제목은 80자 이하로 입력해 주세요."),
+  oneLine: z.string().trim().min(5, "한 줄 소개는 5자 이상 입력해 주세요.").max(140, "한 줄 소개는 140자 이하로 입력해 주세요."),
+  problem: z.string().trim().min(10, "문제는 10자 이상 입력해 주세요.").max(2000, "문제는 2000자 이하로 입력해 주세요."),
+  solution: z.string().trim().min(10, "해결 방법은 10자 이상 입력해 주세요.").max(2000, "해결 방법은 2000자 이하로 입력해 주세요."),
   category: categorySchema,
-  coverImageUrl: z.string().url().nullable().optional()
+  coverImageUrl: z.string().url("올바른 이미지 URL을 입력해 주세요.").nullable().optional()
 }) satisfies z.ZodType<CreateIdeaRequest>;
 
 const createCommentSchema = z.object({

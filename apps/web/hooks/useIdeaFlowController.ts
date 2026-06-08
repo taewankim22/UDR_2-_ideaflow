@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   AIEvaluation,
   ApiResponse,
@@ -44,7 +44,9 @@ export function useIdeaFlowController(): IdeaFlowController {
   const client = useMemo(() => createIdeaFlowClient(), []);
   const [session, setSession] = useState<AuthSession | null>(null);
   const [ideas, setIdeas] = useState<IdeaCard[]>([]);
-  const [selectedIdea, setSelectedIdea] = useState<IdeaDetail | null>(null);
+    const [selectedIdea, setSelectedIdea] = useState<IdeaDetail | null>(null);
+  const selectedIdeaIdRef = useRef(selectedIdea?.id);
+  selectedIdeaIdRef.current = selectedIdea?.id;
   const [comments, setComments] = useState<IdeaComment[]>([]);
   const [whiteboard, setWhiteboard] = useState<Whiteboard | null>(null);
   const [whiteboardAssistantMessages, setWhiteboardAssistantMessages] = useState<WhiteboardAssistantMessage[]>([]);
@@ -128,12 +130,12 @@ export function useIdeaFlowController(): IdeaFlowController {
       }
 
       setIdeas(result.data);
-      const nextId = focusId ?? selectedIdea?.id ?? result.data[0]?.id;
+            const nextId = focusId ?? selectedIdeaIdRef.current ?? result.data[0]?.id;
       if (nextId) {
         await selectIdea(nextId);
       }
     },
-    [client, feedTab, handleFailure, selectIdea, selectedIdea?.id]
+    [client, feedTab, handleFailure, selectIdea]
   );
 
   const loadWhiteboard = useCallback(

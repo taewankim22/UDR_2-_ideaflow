@@ -207,7 +207,7 @@ function IdeaMasonryCard(props: {
 
   return (
     <article className="mb-5 break-inside-avoid overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-card">
-      <button className="block w-full text-left" onClick={() => void props.onSelect(props.idea.id)}>
+            <div className="block w-full cursor-pointer text-left" onClick={() => void props.onSelect(props.idea.id)}>
         <div className={`${visualHeight} relative bg-cover bg-center`} style={getCoverStyle(props.idea)}>
           <span className="absolute right-4 top-4 rounded-full bg-slate-950/85 px-3 py-2 text-xs font-black text-white">
             {props.idea.coverImageUrl ? "커버 이미지" : "기본 이미지"}
@@ -259,7 +259,7 @@ function IdeaMasonryCard(props: {
             </div>
           ) : null}
         </div>
-      </button>
+            </div>
 
       <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-xs font-bold text-slate-500">
         <div className="flex items-center gap-4">
